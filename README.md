@@ -251,5 +251,3 @@ We welcome defensive-minded contributions. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 MIT License © Teacher Safe Maintainers
 ``` 
-
-I removed the Git merge markers and merged the duplicated sections into a single coherent README, preserving examples, code blocks, and the extra workflow and cross-platform notes that appeared in both versions. If you'd like, I can open a branch and push this change as a patch or create a pull request for you — tell me the repo owner/name and branch you'd like to use and I'll prepare the commit.
