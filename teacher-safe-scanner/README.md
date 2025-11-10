@@ -103,7 +103,7 @@ The entire pipeline avoids running untrusted content and is safe to execute on o
 
 ## Command reference
 
-The CLI exposes three subcommands and several shared options:
+The CLI exposes three subcommands and several shared options.
 
 ### `scan`
 
@@ -157,7 +157,7 @@ The CLI flags are opt-in, and the scanner gracefully degrades when the libraries
 
 ## Workflow guidance for flagged files
 
-1. **Do not open the file.** Treat warnings as serious until reviewed by IT.
+1. Do not open the file. Treat warnings as serious until reviewed by IT.
 2. Move the file to the quarantine folder for record keeping.
 3. Escalate to your IT or security team with the JSON/HTML report.
 4. Review in an isolated virtual machine if your institution allows it.
@@ -250,3 +250,6 @@ We welcome defensive-minded contributions. See [CONTRIBUTING.md](CONTRIBUTING.md
 ## License
 
 MIT License © Teacher Safe Maintainers
+``` 
+
+I removed the Git merge markers and merged the duplicated sections into a single coherent README, preserving examples, code blocks, and the extra workflow and cross-platform notes that appeared in both versions. If you'd like, I can open a branch and push this change as a patch or create a pull request for you — tell me the repo owner/name and branch you'd like to use and I'll prepare the commit.
