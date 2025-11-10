@@ -1,0 +1,61 @@
+name: build-and-release
+on:
+  push:
+    tags: ["v*.*.*"]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+          pip install -r requirements-optional.txt || true
+          pip install pyinstaller PySimpleGUI
+          pip install ruff mypy pytest
+      - name: Lint & Typecheck
+        run: |
+          ruff check .
+          mypy .
+      - name: Test
+        run: pytest -q
+      - name: Build PyInstaller
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python -m PyInstaller --noconfirm --clean --name TeacherSafeScanner --onefile --windowed --add-data "scanner/reporting/html_theme.css;scanner/reporting" scanner/gui.py
+            7z a TeacherSafeScanner-windows.zip dist/TeacherSafeScanner.exe
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            python -m PyInstaller --noconfirm --clean --name TeacherSafeScanner --onefile --windowed --add-data "scanner/reporting/html_theme.css:scanner/reporting" scanner/gui.py
+            ditto -c -k --sequesterRsrc --keepParent dist/TeacherSafeScanner dist/TeacherSafeScanner-macos.zip || \
+            (cd dist && zip -r ../TeacherSafeScanner-macos.zip TeacherSafeScanner)
+          else
+            python -m PyInstaller --noconfirm --clean --name TeacherSafeScanner --onefile --windowed --add-data "scanner/reporting/html_theme.css:scanner/reporting" scanner/gui.py
+            (cd dist && tar -czf ../TeacherSafeScanner-linux.tar.gz TeacherSafeScanner)
+          fi
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TeacherSafeScanner-${{ matrix.os }}
+          path: |
+            TeacherSafeScanner-*.zip
+            TeacherSafeScanner-*.tar.gz
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
