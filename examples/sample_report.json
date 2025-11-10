@@ -1,0 +1,17 @@
+{
+  "generated_at": "2024-01-01T00:00:00Z",
+  "files": [
+    {
+      "path": "submissions/homework1.zip",
+      "sha256": "abc123",
+      "size": 34567,
+      "magic_type": "zip",
+      "issues": [
+        {"code": "exe_in_zip", "description": "Found executable file payload.exe inside archive", "evidence": "payload.exe"},
+        {"code": "double_extension", "description": "Filename uses double extension 'report.pdf.exe'", "evidence": "report.pdf.exe"}
+      ],
+      "score": 75,
+      "severity": "Suspicious"
+    }
+  ]
+}
