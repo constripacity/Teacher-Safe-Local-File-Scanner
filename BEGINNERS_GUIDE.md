@@ -75,6 +75,7 @@ This command creates three safe files inside `examples/benign_samples/`:
 ## 7. Run your first scan
 
 ```bash
+python -m scanner scan examples/benign_samples
 python -m scanner.main scan examples/benign_samples
 ```
 
@@ -86,6 +87,7 @@ python -m scanner.main scan examples/benign_samples
 1. **Do not open the file.**
 2. Move it away from your main folders using:
    ```bash
+   python -m scanner quarantine PATH_TO_FILE --dest quarantine
    python -m scanner.main quarantine PATH_TO_FILE --dest quarantine
    ```
 3. Share the JSON or HTML report with your school IT team.
@@ -104,5 +106,23 @@ python -m scanner.main scan examples/benign_samples
 - Read [README.md](README.md) for advanced features.
 - Read [SAFETY.md](SAFETY.md) for more safety advice.
 - If you are stuck, ask a colleague or your IT support team for help. Share any error messages exactly as they appear.
+
+## Windows (PowerShell)
+
+```powershell
+py -3 -m venv .venv
+. .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m scanner.gui
+```
+
+## macOS
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m scanner.gui
+```
 
 Stay safe and never execute files that you do not fully trust.

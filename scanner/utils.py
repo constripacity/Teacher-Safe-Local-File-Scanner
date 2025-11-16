@@ -69,6 +69,9 @@ MAGIC_SIGNATURES = {
 
 
 try:  # pragma: no cover - optional dependency
+    import magic
+except ImportError:  # pragma: no cover - no optional dep in tests
+    magic = None
     import magic  # type: ignore
 except ImportError:  # pragma: no cover - no optional dep in tests
     magic = None  # type: ignore

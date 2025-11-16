@@ -12,6 +12,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import List, Sequence
 from typing import Iterable, List
 
 from . import __version__, reporters
@@ -22,6 +23,18 @@ LOGGER = logging.getLogger(__name__)
 
 
 def configure_logging(verbose: bool) -> None:
+    """Configure root logging based on the verbose flag."""
+    level = logging.DEBUG if verbose else logging.INFO
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=level,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        )
+    else:  # pragma: no cover - defensive branch for repeated CLI invocations
+        logging.getLogger().setLevel(level)
+
+
+def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
@@ -36,6 +49,8 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    scan_parser = subparsers.add_parser("scan", help="Scan files or directories")
+    scan_parser.add_argument("targets", nargs="+", help="File(s) or directory to scan")
     scan_parser = subparsers.add_parser("scan", help="Scan a file or directory")
     scan_parser.add_argument("target", nargs="?", default=".", help="File or directory to scan")
     scan_parser.add_argument("--watch", type=Path, help="Enable polling watch mode on directory")
@@ -56,6 +71,42 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
         help="Enable experimental YARA scanning",
     )
     scan_parser.add_argument("--threads", type=int, default=4, help="Number of worker threads")
+    scan_parser.add_argument(
+        "--report-json",
+        "--output",
+        dest="report_json",
+        type=Path,
+        help="Path to write JSON report",
+    )
+    scan_parser.add_argument(
+        "--report-html",
+        type=Path,
+        help="Path to write an HTML report",
+    )
+    scan_parser.add_argument(
+        "--pdf-rules",
+        choices=("off", "normal", "strict"),
+        default="normal",
+        help="Control PDF rule sensitivity",
+    )
+    scan_parser.add_argument(
+        "--office-rules",
+        choices=("off", "normal", "strict"),
+        default="normal",
+        help="Control Office document rule sensitivity",
+    )
+    scan_parser.add_argument(
+        "--zip-rules",
+        choices=("off", "normal", "strict"),
+        default="normal",
+        help="Control archive rule sensitivity",
+    )
+    scan_parser.add_argument(
+        "--image-rules",
+        choices=("off", "normal", "strict"),
+        default="normal",
+        help="Control image rule sensitivity",
+    )
     scan_parser.add_argument("--output", type=Path, help="Path to write JSON report")
 
     quarantine_parser = subparsers.add_parser("quarantine", help="Move a file into quarantine")
@@ -74,6 +125,7 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
     return parser.parse_args(list(argv))
 
 
+def watch_loop(target: Path, config: ScanConfig, *, report_json: Path | None, report_html: Path | None) -> int:
 def watch_loop(target: Path, config: ScanConfig) -> int:
     LOGGER.info("Starting watch mode for %s", target)
     seen: dict[Path, float] = {}
@@ -89,6 +141,7 @@ def watch_loop(target: Path, config: ScanConfig) -> int:
             for path in changed:
                 LOGGER.info("Detected change in %s", path)
                 results = scan(path, config)
+                exit_code = max(exit_code, emit_results(results, report_json, report_html))
                 exit_code = max(exit_code, emit_results(results, None))
                 seen[path] = path.stat().st_mtime
             time.sleep(10)
@@ -97,12 +150,25 @@ def watch_loop(target: Path, config: ScanConfig) -> int:
         return exit_code
 
 
+def emit_results(
+    results: List[ScanResult],
+    report_json: Path | None,
+    report_html: Path | None,
+) -> int:
 def emit_results(results: List[ScanResult], output: Path | None) -> int:
     if not results:
         LOGGER.info("No files scanned")
         return 0
     dict_results = [res.to_dict() for res in results]
     reporters.print_console_report(dict_results, sys.stdout)
+    if report_json:
+        report_json.parent.mkdir(parents=True, exist_ok=True)
+        reporters.write_json_report(dict_results, report_json)
+        LOGGER.info("JSON report written to %s", report_json)
+    if report_html:
+        report_html.parent.mkdir(parents=True, exist_ok=True)
+        reporters.write_html_report(dict_results, report_html)
+        LOGGER.info("HTML report written to %s", report_html)
     if output:
         reporters.write_json_report(dict_results, output)
         LOGGER.info("Report written to %s", output)
@@ -116,6 +182,10 @@ def emit_results(results: List[ScanResult], output: Path | None) -> int:
 
 
 def handle_scan(args: argparse.Namespace) -> int:
+    targets = [Path(target) for target in args.targets]
+    watch_target = args.watch
+    if watch_target and len(targets) != 1:
+        raise SystemExit("Watch mode requires a single target")
     target = Path(args.target)
     watch_target = args.watch
     if watch_target and not watch_target.exists():
@@ -125,6 +195,20 @@ def handle_scan(args: argparse.Namespace) -> int:
         use_magic=args.use_magic,
         use_yara=args.use_yara,
         threads=max(args.threads, 1),
+        pdf_rules=args.pdf_rules,
+        office_rules=args.office_rules,
+        zip_rules=args.zip_rules,
+        image_rules=args.image_rules,
+    )
+    if watch_target:
+        return watch_loop(watch_target, config, report_json=args.report_json, report_html=args.report_html)
+    all_results: List[ScanResult] = []
+    for target in targets:
+        if not target.exists():
+            LOGGER.warning("Target %s does not exist", target)
+            continue
+        all_results.extend(scan(target, config))
+    return emit_results(all_results, args.report_json, args.report_html)
     )
     if watch_target:
         return watch_loop(watch_target, config)
@@ -155,11 +239,14 @@ def handle_report(args: argparse.Namespace) -> int:
     if args.html:
         if not args.output:
             raise SystemExit("--output is required when using --html")
+        args.output.parent.mkdir(parents=True, exist_ok=True)
         reporters.write_html_report(files, args.output)
         LOGGER.info("HTML report written to %s", args.output)
     return 0
 
 
+def main(argv: Sequence[str] | None = None) -> int:
+    args = parse_args(argv or sys.argv[1:])
 def main(argv: Iterable[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     args = parse_args(argv)
@@ -170,6 +257,10 @@ def main(argv: Iterable[str] | None = None) -> int:
         return handle_quarantine(args)
     if args.command == "report":
         return handle_report(args)
+    raise SystemExit(f"Unknown command {args.command}")
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
     raise SystemExit("Unknown command")
 
 

@@ -6,6 +6,7 @@
 
 > To add your own walkthrough, drop a GIF at `docs/demo.gif` and update this link.
 
+Teacher-Safe Local File Scanner is a Python-based, offline-friendly toolkit that helps educators quickly triage student-submitted files before opening them. It performs static checks only—no execution of untrusted code—and produces human-readable and machine-readable reports.
 Teacher-Safe Local File Scanner is a Python-based, offline-friendly toolkit that helps educators quickly triage student-submitted files before opening them. It performs static checks only, no execution of untrusted code and produces human readable and machine/readable reports.
 
 ## Table of contents
@@ -48,6 +49,7 @@ python examples/generate_benign_samples.py  # Materialise demo files
 ### Scan files or folders
 
 ```bash
+python -m scanner scan ./examples/benign_samples --max-file-size 5000000 --threads 4
 python -m scanner.main scan ./examples/benign_samples --max-file-size 5000000 --threads 4
 ```
 
@@ -59,12 +61,15 @@ python -m scanner.main scan ./examples/benign_samples --max-file-size 5000000 --
 ### Watch a directory (polling, non-blocking)
 
 ```bash
+python -m scanner scan --watch ./incoming
 python -m scanner.main scan --watch ./incoming
 ```
 
 ### Produce reports
 
 ```bash
+python -m scanner scan submissions --report-json scan_report.json --report-html scan_report.html
+python -m scanner report scan_report.json --html --output scan_report.html
 python -m scanner.main scan submissions --output scan_report.json
 python -m scanner.main report scan_report.json --html --output scan_report.html
 ```
@@ -72,6 +77,7 @@ python -m scanner.main report scan_report.json --html --output scan_report.html
 ### Quarantine a file
 
 ```bash
+python -m scanner quarantine ./submissions/suspicious.docx --dest ./quarantine
 python -m scanner.main quarantine ./submissions/suspicious.docx --dest ./quarantine
 ```
 
@@ -87,6 +93,20 @@ python examples/generate_benign_samples.py
 
 The script recreates a harmless text file, a minimal PNG image, and a macro-free `.docx` document without storing binary fixtures in the repository.
 
+## One-click binaries
+
+Grab the latest release assets for Windows, macOS, or Linux to run the scanner without Python. Each bundle ships offline-first and collects no telemetry.
+
+### Windows context menu
+
+1. Copy `TeacherSafeScanner.exe` to `C:\Program Files\TeacherSafe\`.
+2. Double-click `scripts/windows_add_context_menu.reg` to register a **Scan with Teacher-Safe** right-click option.
+
+### GUI launcher
+
+- On Python: run `python -m scanner.gui` and use the picker to select files or folders, then press **Scan** and **Open Report**.
+- On packaged builds: launch `TeacherSafeScanner` from the extracted bundle and follow the same steps to save and open the HTML report.
+
 ## How scanning works
 
 The scanner combines lightweight type identification, static detectors, and heuristic scoring:
@@ -95,6 +115,7 @@ The scanner combines lightweight type identification, static detectors, and heur
 | --- | --- | --- |
 | Discovery | Files are walked recursively (respecting `--max-file-size`) and hashed using streaming reads. | [`scanner.utils`](scanner/utils.py) |
 | Type sniffing | If `python-magic` is enabled, MIME detection is delegated; otherwise magic bytes are inspected. | [`scanner.scanner_core`](scanner/scanner_core.py) |
+| Detection | Format-specific rules look for risky markers (e.g., macros, embedded executables, appended payloads). | [`scanner.detectors`](scanner/detectors/__init__.py) |
 | Detection | Format-specific rules look for risky markers (e.g., macros, embedded executables, appended payloads). | [`scanner.detectors`](scanner/detectors.py) |
 | Scoring | Each finding contributes a weighted score mapped to Safe/Caution/Suspicious/High labels. | [`scanner.heuristics`](scanner/heuristics.py) |
 | Reporting | Results are aggregated into JSON, console, or HTML outputs. | [`scanner.reporters`](scanner/reporters.py) |
@@ -103,6 +124,7 @@ The entire pipeline avoids running untrusted content and is safe to execute on o
 
 ## Command reference
 
+The CLI exposes three subcommands and several shared options:
 The CLI exposes three subcommands and several shared options.
 
 ### `scan`
@@ -116,6 +138,8 @@ python -m scanner.main scan <path> [--output report.json] [--threads 8] [--max-f
 Useful flags:
 
 - `--watch <folder>`: poll for new files while continuing to monitor previously scanned ones.
+- `--report-json` / `--report-html`: save structured and teacher-friendly reports in one run.
+- `--pdf-rules`, `--office-rules`, `--zip-rules`, `--image-rules`: choose `off`, `normal`, or `strict` for per-format heuristics.
 - `--use-magic` / `--use-yara`: opt into external libraries when installed.
 - `--max-file-size`: skip overly large submissions to save time.
 - `--threads`: increase if you have many CPU cores and fast storage.
@@ -157,6 +181,7 @@ The CLI flags are opt-in, and the scanner gracefully degrades when the libraries
 
 ## Workflow guidance for flagged files
 
+1. **Do not open the file.** Treat warnings as serious until reviewed by IT.
 1. Do not open the file. Treat warnings as serious until reviewed by IT.
 2. Move the file to the quarantine folder for record keeping.
 3. Escalate to your IT or security team with the JSON/HTML report.

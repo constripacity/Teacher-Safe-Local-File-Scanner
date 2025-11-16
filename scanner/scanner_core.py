@@ -12,6 +12,9 @@ from . import detectors, heuristics, utils
 LOGGER = logging.getLogger(__name__)
 
 try:  # pragma: no cover - optional dependency
+    import yara
+except ImportError:  # pragma: no cover
+    yara = None
     import yara  # type: ignore
 except ImportError:  # pragma: no cover
     yara = None  # type: ignore
@@ -25,6 +28,10 @@ class ScanConfig:
     use_magic: bool = False
     use_yara: bool = False
     threads: int = 4
+    pdf_rules: str = "normal"
+    office_rules: str = "normal"
+    zip_rules: str = "normal"
+    image_rules: str = "normal"
 
 
 @dataclass
@@ -91,6 +98,38 @@ def _run_yara(path: Path) -> List[Dict[str, str]]:
         return []
 
 
+def _normalize_rule_findings(rule_findings: List[Dict]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    for finding in rule_findings:
+        rule = str(finding.get("rule", "rule"))
+        detail = str(finding.get("detail", ""))
+        issue: Dict[str, str] = {
+            "code": rule,
+            "description": detail,
+        }
+        severity = finding.get("severity")
+        if severity:
+            issue["severity"] = str(severity)
+        issues.append(issue)
+    return issues
+
+
+def _deduplicate(findings: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    seen: set[tuple[str | None, str | None, str | None]] = set()
+    unique: List[Dict[str, str]] = []
+    for finding in findings:
+        key = (
+            finding.get("code"),
+            finding.get("evidence"),
+            finding.get("description"),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(finding)
+    return unique
+
+
 def _collect_findings(path: Path, magic_type: str, config: ScanConfig) -> List[Dict[str, str]]:
     findings: List[Dict[str, str]] = []
     maybe = detectors.detect_double_extension(path)
@@ -114,6 +153,50 @@ def _collect_findings(path: Path, magic_type: str, config: ScanConfig) -> List[D
         findings.append(maybe)
     findings.extend(detectors.extract_urls_and_flag(path))
 
+    if config.pdf_rules != "off" and (magic_type == "pdf" or suffix == ".pdf"):
+        try:
+            with path.open("rb") as handle:
+                findings.extend(
+                    _normalize_rule_findings(
+                        detectors.analyze_pdf(handle, strict=config.pdf_rules == "strict")
+                    )
+                )
+        except OSError as exc:
+            LOGGER.warning("Unable to run PDF rules for %s: %s", path, exc)
+    if config.office_rules != "off" and suffix in {".docx", ".pptx", ".xlsx", ".docm", ".xlsm", ".pptm"}:
+        try:
+            with path.open("rb") as handle:
+                findings.extend(
+                    _normalize_rule_findings(
+                        detectors.analyze_office(handle, strict=config.office_rules == "strict")
+                    )
+                )
+        except OSError as exc:
+            LOGGER.warning("Unable to run Office rules for %s: %s", path, exc)
+    if config.zip_rules != "off" and (magic_type == "zip" or suffix == ".zip"):
+        try:
+            with path.open("rb") as handle:
+                findings.extend(
+                    _normalize_rule_findings(
+                        detectors.analyze_zip(handle, strict=config.zip_rules == "strict")
+                    )
+                )
+        except OSError as exc:
+            LOGGER.warning("Unable to run ZIP rules for %s: %s", path, exc)
+    if config.image_rules != "off" and suffix in {".png", ".jpg", ".jpeg"}:
+        try:
+            with path.open("rb") as handle:
+                findings.extend(
+                    _normalize_rule_findings(
+                        detectors.analyze_image(handle, strict=config.image_rules == "strict")
+                    )
+                )
+        except OSError as exc:
+            LOGGER.warning("Unable to run image rules for %s: %s", path, exc)
+
+    if config.use_yara:
+        findings.extend(_run_yara(path))
+    return _deduplicate(findings)
     if config.use_yara:
         findings.extend(_run_yara(path))
     return findings

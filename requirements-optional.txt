@@ -1,2 +1,5 @@
+python-magic==0.4.27
+yara-python==4.5.1
+watchdog==5.0.2
 python-magic
 yara-python

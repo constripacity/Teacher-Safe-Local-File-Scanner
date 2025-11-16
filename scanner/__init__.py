@@ -1,3 +1,4 @@
+__all__ = ["__version__"]
 """Teacher-Safe Local File Scanner package."""
 from __future__ import annotations
 
