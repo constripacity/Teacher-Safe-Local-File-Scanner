@@ -1,0 +1,9 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "teacher-safe-local-file-scanner"
+version = "0.1.0"
+description = "Offline-first local file scanner for teachers"
+requires-python = ">=3.10"
