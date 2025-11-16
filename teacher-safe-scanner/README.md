@@ -7,7 +7,6 @@
 > To add your own walkthrough, drop a GIF at `docs/demo.gif` and update this link.
 
 Teacher-Safe Local File Scanner is a Python-based, offline-friendly toolkit that helps educators quickly triage student-submitted files before opening them. It performs static checks only—no execution of untrusted code—and produces human-readable and machine-readable reports.
-Teacher-Safe Local File Scanner is a Python-based, offline-friendly toolkit that helps educators quickly triage student-submitted files before opening them. It performs static checks only, no execution of untrusted code and produces human readable and machine/readable reports.
 
 ## Table of contents
 
@@ -50,7 +49,6 @@ python examples/generate_benign_samples.py  # Materialise demo files
 
 ```bash
 python -m scanner scan ./examples/benign_samples --max-file-size 5000000 --threads 4
-python -m scanner.main scan ./examples/benign_samples --max-file-size 5000000 --threads 4
 ```
 
 - Exit code `0`: no suspicious findings
@@ -62,7 +60,6 @@ python -m scanner.main scan ./examples/benign_samples --max-file-size 5000000 --
 
 ```bash
 python -m scanner scan --watch ./incoming
-python -m scanner.main scan --watch ./incoming
 ```
 
 ### Produce reports
@@ -70,15 +67,12 @@ python -m scanner.main scan --watch ./incoming
 ```bash
 python -m scanner scan submissions --report-json scan_report.json --report-html scan_report.html
 python -m scanner report scan_report.json --html --output scan_report.html
-python -m scanner.main scan submissions --output scan_report.json
-python -m scanner.main report scan_report.json --html --output scan_report.html
 ```
 
 ### Quarantine a file
 
 ```bash
 python -m scanner quarantine ./submissions/suspicious.docx --dest ./quarantine
-python -m scanner.main quarantine ./submissions/suspicious.docx --dest ./quarantine
 ```
 
 The quarantine command moves the file safely, sets read-only permissions, and leaves a `.meta.json` file with provenance details.
@@ -116,7 +110,6 @@ The scanner combines lightweight type identification, static detectors, and heur
 | Discovery | Files are walked recursively (respecting `--max-file-size`) and hashed using streaming reads. | [`scanner.utils`](scanner/utils.py) |
 | Type sniffing | If `python-magic` is enabled, MIME detection is delegated; otherwise magic bytes are inspected. | [`scanner.scanner_core`](scanner/scanner_core.py) |
 | Detection | Format-specific rules look for risky markers (e.g., macros, embedded executables, appended payloads). | [`scanner.detectors`](scanner/detectors/__init__.py) |
-| Detection | Format-specific rules look for risky markers (e.g., macros, embedded executables, appended payloads). | [`scanner.detectors`](scanner/detectors.py) |
 | Scoring | Each finding contributes a weighted score mapped to Safe/Caution/Suspicious/High labels. | [`scanner.heuristics`](scanner/heuristics.py) |
 | Reporting | Results are aggregated into JSON, console, or HTML outputs. | [`scanner.reporters`](scanner/reporters.py) |
 
@@ -125,7 +118,6 @@ The entire pipeline avoids running untrusted content and is safe to execute on o
 ## Command reference
 
 The CLI exposes three subcommands and several shared options:
-The CLI exposes three subcommands and several shared options.
 
 ### `scan`
 
@@ -182,7 +174,6 @@ The CLI flags are opt-in, and the scanner gracefully degrades when the libraries
 ## Workflow guidance for flagged files
 
 1. **Do not open the file.** Treat warnings as serious until reviewed by IT.
-1. Do not open the file. Treat warnings as serious until reviewed by IT.
 2. Move the file to the quarantine folder for record keeping.
 3. Escalate to your IT or security team with the JSON/HTML report.
 4. Review in an isolated virtual machine if your institution allows it.
@@ -275,4 +266,3 @@ We welcome defensive-minded contributions. See [CONTRIBUTING.md](CONTRIBUTING.md
 ## License
 
 MIT License © Teacher Safe Maintainers
-``` 

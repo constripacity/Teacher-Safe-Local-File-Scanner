@@ -15,9 +15,6 @@ try:  # pragma: no cover - optional dependency
     import yara
 except ImportError:  # pragma: no cover
     yara = None
-    import yara  # type: ignore
-except ImportError:  # pragma: no cover
-    yara = None  # type: ignore
 
 
 @dataclass
@@ -197,9 +194,6 @@ def _collect_findings(path: Path, magic_type: str, config: ScanConfig) -> List[D
     if config.use_yara:
         findings.extend(_run_yara(path))
     return _deduplicate(findings)
-    if config.use_yara:
-        findings.extend(_run_yara(path))
-    return findings
 
 
 def _scan_file(path: Path, config: ScanConfig) -> ScanResult:

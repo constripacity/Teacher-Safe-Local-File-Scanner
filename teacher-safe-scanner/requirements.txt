@@ -2,5 +2,3 @@ PySimpleGUI==4.60.5
 pytest==8.3.3
 ruff==0.6.9
 mypy==1.11.2
-pytest
-ruff

@@ -46,8 +46,6 @@ def calculate_score(findings: Iterable[Dict[str, str]]) -> tuple[int, str, list[
     for finding in findings:
         code = finding.get("code") or finding.get("rule", "")
         weight = WEIGHTS.get(code or "", 5)
-        code = finding.get("code", "")
-        weight = WEIGHTS.get(code, 5)
         score += weight
         reasons.append(f"{code}: +{weight}")
     score = min(score, 100)

@@ -13,7 +13,6 @@ import sys
 import time
 from pathlib import Path
 from typing import List, Sequence
-from typing import Iterable, List
 
 from . import __version__, reporters
 from .quarantine import move_to_quarantine
@@ -35,11 +34,6 @@ def configure_logging(verbose: bool) -> None:
 
 
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-
-
-def parse_args(argv: Iterable[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="teacher-safe-scanner",
         description="Static defensive scanner for teachers reviewing student submissions.",
@@ -51,8 +45,6 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
 
     scan_parser = subparsers.add_parser("scan", help="Scan files or directories")
     scan_parser.add_argument("targets", nargs="+", help="File(s) or directory to scan")
-    scan_parser = subparsers.add_parser("scan", help="Scan a file or directory")
-    scan_parser.add_argument("target", nargs="?", default=".", help="File or directory to scan")
     scan_parser.add_argument("--watch", type=Path, help="Enable polling watch mode on directory")
     scan_parser.add_argument(
         "--max-file-size",
@@ -107,7 +99,6 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
         default="normal",
         help="Control image rule sensitivity",
     )
-    scan_parser.add_argument("--output", type=Path, help="Path to write JSON report")
 
     quarantine_parser = subparsers.add_parser("quarantine", help="Move a file into quarantine")
     quarantine_parser.add_argument("path", type=Path, help="File or directory to quarantine")
@@ -126,7 +117,6 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
 
 
 def watch_loop(target: Path, config: ScanConfig, *, report_json: Path | None, report_html: Path | None) -> int:
-def watch_loop(target: Path, config: ScanConfig) -> int:
     LOGGER.info("Starting watch mode for %s", target)
     seen: dict[Path, float] = {}
     exit_code = 0
@@ -142,7 +132,6 @@ def watch_loop(target: Path, config: ScanConfig) -> int:
                 LOGGER.info("Detected change in %s", path)
                 results = scan(path, config)
                 exit_code = max(exit_code, emit_results(results, report_json, report_html))
-                exit_code = max(exit_code, emit_results(results, None))
                 seen[path] = path.stat().st_mtime
             time.sleep(10)
     except KeyboardInterrupt:
@@ -155,7 +144,6 @@ def emit_results(
     report_json: Path | None,
     report_html: Path | None,
 ) -> int:
-def emit_results(results: List[ScanResult], output: Path | None) -> int:
     if not results:
         LOGGER.info("No files scanned")
         return 0
@@ -169,9 +157,6 @@ def emit_results(results: List[ScanResult], output: Path | None) -> int:
         report_html.parent.mkdir(parents=True, exist_ok=True)
         reporters.write_html_report(dict_results, report_html)
         LOGGER.info("HTML report written to %s", report_html)
-    if output:
-        reporters.write_json_report(dict_results, output)
-        LOGGER.info("Report written to %s", output)
     mapping = {"Safe": 0, "Caution": 1, "Suspicious": 1, "High": 2}
     exit_code = 0
     for result in results:
@@ -186,8 +171,6 @@ def handle_scan(args: argparse.Namespace) -> int:
     watch_target = args.watch
     if watch_target and len(targets) != 1:
         raise SystemExit("Watch mode requires a single target")
-    target = Path(args.target)
-    watch_target = args.watch
     if watch_target and not watch_target.exists():
         raise SystemExit(f"Watch directory {watch_target} does not exist")
     config = ScanConfig(
@@ -209,11 +192,6 @@ def handle_scan(args: argparse.Namespace) -> int:
             continue
         all_results.extend(scan(target, config))
     return emit_results(all_results, args.report_json, args.report_html)
-    )
-    if watch_target:
-        return watch_loop(watch_target, config)
-    results = scan(target, config)
-    return emit_results(results, args.output)
 
 
 def handle_quarantine(args: argparse.Namespace) -> int:
@@ -247,9 +225,6 @@ def handle_report(args: argparse.Namespace) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
-def main(argv: Iterable[str] | None = None) -> int:
-    argv = argv if argv is not None else sys.argv[1:]
-    args = parse_args(argv)
     configure_logging(args.verbose)
     if args.command == "scan":
         return handle_scan(args)
@@ -261,8 +236,4 @@ def main(argv: Iterable[str] | None = None) -> int:
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
-    raise SystemExit("Unknown command")
-
-
-if __name__ == "__main__":
     sys.exit(main())

@@ -7,3 +7,37 @@ name = "teacher-safe-local-file-scanner"
 version = "0.1.0"
 description = "Offline-first local file scanner for teachers"
 requires-python = ">=3.10"
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "teacher-safe-scanner"
+version = "0.1.0"
+description = "Local, defensive scanner for teacher-submitted files"
+authors = [{name = "Teacher Safe Maintainers"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+keywords = ["security", "education", "scanner"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://example.com/teacher-safe-scanner"
+Source = "https://github.com/example/teacher-safe-scanner"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+ignore = ["E203"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

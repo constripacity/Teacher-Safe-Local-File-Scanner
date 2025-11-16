@@ -76,7 +76,6 @@ This command creates three safe files inside `examples/benign_samples/`:
 
 ```bash
 python -m scanner scan examples/benign_samples
-python -m scanner.main scan examples/benign_samples
 ```
 
 - If everything is safe, the program finishes with exit code `0` and prints a summary.
@@ -88,7 +87,6 @@ python -m scanner.main scan examples/benign_samples
 2. Move it away from your main folders using:
    ```bash
    python -m scanner quarantine PATH_TO_FILE --dest quarantine
-   python -m scanner.main quarantine PATH_TO_FILE --dest quarantine
    ```
 3. Share the JSON or HTML report with your school IT team.
 
