@@ -12,9 +12,9 @@ from . import detectors, heuristics, utils
 LOGGER = logging.getLogger(__name__)
 
 try:  # pragma: no cover - optional dependency
-    import yara  # type: ignore
+    import yara
 except ImportError:  # pragma: no cover
-    yara = None  # type: ignore
+    yara = None
 
 
 @dataclass

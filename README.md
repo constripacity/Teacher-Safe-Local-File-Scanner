@@ -7,7 +7,6 @@
 > To add your own walkthrough, drop a GIF at `docs/demo.gif` and update this link.
 
 Teacher-Safe Local File Scanner is a Python-based, offline-friendly toolkit that helps educators quickly triage student-submitted files before opening them. It performs static checks only—no execution of untrusted code—and produces human-readable and machine-readable reports.
-Teacher-Safe Local File Scanner is a Python-based, offline-friendly toolkit that helps educators quickly triage student-submitted files before opening them. It performs static checks only, no execution of untrusted code and produces human readable and machine/readable reports.
 
 ## Table of contents
 

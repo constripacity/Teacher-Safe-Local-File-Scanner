@@ -69,9 +69,9 @@ MAGIC_SIGNATURES = {
 
 
 try:  # pragma: no cover - optional dependency
-    import magic  # type: ignore
+    import magic
 except ImportError:  # pragma: no cover - no optional dep in tests
-    magic = None  # type: ignore
+    magic = None
 
 
 def detect_magic_type(path: Path, *, use_magic: bool = False) -> str:
