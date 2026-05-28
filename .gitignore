@@ -1,3 +1,37 @@
 # Generated demo assets
 /docs/demo.gif
 /docs/demo-placeholder.gif
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets / local env files
+.env
+.env.local
+.env.*.local
+
+# Node (rare here, but covered for forward safety)
+node_modules/
+
+# Editor / backup files
+*.bak
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
