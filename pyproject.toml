@@ -4,31 +4,42 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "teacher-safe-local-file-scanner"
-version = "0.1.0"
-description = "Offline-first local file scanner for teachers"
-requires-python = ">=3.10"
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "teacher-safe-scanner"
-version = "0.1.0"
-description = "Local, defensive scanner for teacher-submitted files"
-authors = [{name = "Teacher Safe Maintainers"}]
+version = "0.2.0"
+description = "Offline-first, defensive local file scanner for teachers and school IT"
+authors = [{ name = "Teacher-Safe Maintainers" }]
 readme = "README.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
-keywords = ["security", "education", "scanner"]
+keywords = ["security", "education", "scanner", "defensive", "offline"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Security",
+    "Topic :: Education",
 ]
+dependencies = []
+
+[project.optional-dependencies]
+gui = ["PySimpleGUI==4.60.5.1"]
+magic = ["python-magic>=0.4"]
+yara = ["yara-python>=4.5"]
+watch = ["watchdog>=5.0"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "pre-commit>=3.7"]
 
 [project.urls]
-Homepage = "https://example.com/teacher-safe-scanner"
-Source = "https://github.com/example/teacher-safe-scanner"
+Homepage = "https://github.com/constripacity/Teacher-Safe-Local-File-Scanner"
+Source = "https://github.com/constripacity/Teacher-Safe-Local-File-Scanner"
+Issues = "https://github.com/constripacity/Teacher-Safe-Local-File-Scanner/issues"
+
+[project.scripts]
+teacher-safe-scan = "scanner.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scanner*"]
 
 [tool.ruff]
 line-length = 100
