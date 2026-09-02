@@ -8,6 +8,7 @@ import stat
 import pytest
 
 from scanner.quarantine import MANIFEST_NAME, QuarantineError, QuarantineStore, sha256_file
+from tests._platform import requires_symlinks
 
 
 @pytest.fixture()
@@ -59,6 +60,7 @@ def test_nothing_is_ever_deleted(tmp_path, store):
     assert (store.root / entry.stored_name).read_bytes() == b"important"
 
 
+@requires_symlinks
 def test_symlinks_are_refused(tmp_path, store):
     real = tmp_path / "real.txt"
     real.write_bytes(b"x")

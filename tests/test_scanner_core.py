@@ -8,6 +8,7 @@ import pytest
 from scanner.findings import Verdict
 from scanner.limits import DEFAULT_LIMITS, ScanLimits
 from scanner.scanner_core import ScanConfig, iter_targets, scan, scan_file
+from tests._platform import requires_posix_ids, requires_symlinks
 from tests.samples import HARMLESS, make_docx, make_zip
 
 
@@ -46,6 +47,7 @@ def test_oversized_file_is_not_reported_as_safe(tmp_path, config):
     assert "file_too_large" in {f.code for f in result.findings}
 
 
+@requires_posix_ids
 def test_unreadable_file_is_not_reported_as_safe(tmp_path, config):
     target = tmp_path / "locked.bin"
     target.write_bytes(b"data")
@@ -60,6 +62,7 @@ def test_unreadable_file_is_not_reported_as_safe(tmp_path, config):
     assert result.error
 
 
+@requires_symlinks
 def test_symlinks_are_not_followed_by_default(tmp_path, config):
     real = tmp_path / "real.txt"
     real.write_text("hello")
@@ -70,6 +73,7 @@ def test_symlinks_are_not_followed_by_default(tmp_path, config):
     assert result.verdict is Verdict.COULD_NOT_INSPECT
 
 
+@requires_symlinks
 def test_directory_symlinks_are_not_walked(tmp_path, config):
     inner = tmp_path / "inner"
     inner.mkdir()

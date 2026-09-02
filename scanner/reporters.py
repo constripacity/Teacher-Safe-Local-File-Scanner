@@ -28,6 +28,17 @@ _VERDICT_STYLE: Dict[Verdict, tuple[str, str, str]] = {
     Verdict.LIKELY_SAFE: ("v-safe", "✓", "LIKELY SAFE"),
 }
 
+#: ASCII stand-ins for the verdict glyphs above, used when the console stream
+#: cannot encode Unicode (e.g. a default Windows cp1252 console). The HTML report
+#: is always written UTF-8, so it keeps the nicer symbols; only the terminal path
+#: degrades, and only when it has to.
+_VERDICT_ASCII: Dict[Verdict, str] = {
+    Verdict.DO_NOT_OPEN: "X",
+    Verdict.REVIEW_WITH_CAUTION: "!",
+    Verdict.COULD_NOT_INSPECT: "?",
+    Verdict.LIKELY_SAFE: "+",
+}
+
 _ANSI = {
     Verdict.DO_NOT_OPEN: "\033[1;97;41m",
     Verdict.REVIEW_WITH_CAUTION: "\033[1;30;43m",
@@ -50,11 +61,41 @@ def write_json_report(summary: TriageSummary, destination: Path) -> None:
 # --------------------------------------------------------------------------
 # Console
 # --------------------------------------------------------------------------
+def _stream_can_encode(stream: TextIO, probe: str = "✖✓•…") -> bool:
+    """True if ``stream`` can encode the report's decorative glyphs.
+
+    A stream with no ``encoding`` attribute (e.g. ``io.StringIO`` used in tests)
+    accepts any ``str``, so it is treated as capable.
+    """
+    enc = getattr(stream, "encoding", None)
+    if not enc:
+        return True
+    try:
+        probe.encode(enc)
+    except (LookupError, UnicodeError):
+        return False
+    return True
+
+
 def print_console_report(
     summary: TriageSummary, stream: TextIO, *, color: bool = True, verbose: bool = False
 ) -> None:
     """Worst-first triage table with a plain-English headline."""
-    write = stream.write
+    unicode_ok = _stream_can_encode(stream)
+    enc = getattr(stream, "encoding", None) or "ascii"
+
+    def write(text: str) -> None:
+        # Never let a filename or glyph the console cannot encode abort the scan
+        # after the headline (the durable JSON/HTML reports are unaffected).
+        if not unicode_ok:
+            text = text.encode(enc, "replace").decode(enc)
+        stream.write(text)
+
+    bullet = "•" if unicode_ok else "-"
+    ellipsis = "…" if unicode_ok else "~"
+
+    def symbol_for(verdict: Verdict) -> str:
+        return _VERDICT_STYLE[verdict][1] if unicode_ok else _VERDICT_ASCII[verdict]
 
     def paint(text: str, code: str) -> str:
         return f"{code}{text}{_RESET}" if color else text
@@ -72,7 +113,8 @@ def print_console_report(
     for verdict, count in tallies:
         if not count:
             continue
-        _, symbol, label = _VERDICT_STYLE[verdict]
+        _, _, label = _VERDICT_STYLE[verdict]
+        symbol = symbol_for(verdict)
         parts.append(paint(f" {symbol} {count} {label} ", _ANSI[verdict] if color else ""))
     if parts:
         write("  " + "  ".join(parts) + "\n\n")
@@ -86,10 +128,11 @@ def print_console_report(
         write(paint(header, _BOLD) + "\n")
         write("  " + "-" * (name_width + 60) + "\n")
         for result in shown:
-            _, symbol, label = _VERDICT_STYLE[result.verdict]
+            _, _, label = _VERDICT_STYLE[result.verdict]
+            symbol = symbol_for(result.verdict)
             name = sanitize_display(result.path.name)
             if len(name) > name_width:
-                name = name[: name_width - 1] + "…"
+                name = name[: name_width - 1] + ellipsis
             top = result.top_finding
             reason = top.title if top else (result.error or "no indicators found")
             badge = paint(f"{symbol} {label}".ljust(11), _ANSI[result.verdict] if color else "")
@@ -119,7 +162,7 @@ def print_console_report(
             if finding.severity is Severity.INFO and not verbose:
                 continue
             write(
-                f"    • [{finding.severity.value}/{finding.confidence.value}] "
+                f"    {bullet} [{finding.severity.value}/{finding.confidence.value}] "
                 f"{finding.title}\n"
             )
             write(f"        {finding.plain}\n")

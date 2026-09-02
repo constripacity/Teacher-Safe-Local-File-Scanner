@@ -20,6 +20,7 @@ from scanner.reporters import (
 )
 from scanner.scanner_core import ScanConfig, scan
 from scanner.triage import build_summary, summary_from_dict
+from tests._platform import requires_hostile_filenames
 
 
 @pytest.fixture()
@@ -78,6 +79,7 @@ def test_html_report_contains_every_file_and_the_headline(summary):
         assert result.path.name in html or sanitize_display(result.path.name) in html
 
 
+@requires_hostile_filenames
 def test_html_escapes_hostile_names(tmp_path):
     root = tmp_path / "x"
     root.mkdir()
@@ -150,7 +152,9 @@ def test_email_summary_is_plain_text(summary):
     ],
 )
 def test_dropped_path_parsing(raw, expected):
-    assert [str(p) for p in parse_dropped_paths(raw)] == expected
+    # Compare with as_posix() so the '/'-based expectations hold on Windows too,
+    # where Path stringifies with backslashes.
+    assert [p.as_posix() for p in parse_dropped_paths(raw)] == expected
 
 
 # ---------------------------------------------------------------------- cli
