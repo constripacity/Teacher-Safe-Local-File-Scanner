@@ -1,4 +1,13 @@
-PySimpleGUI==4.60.5.1
-pytest==8.3.3
-ruff==0.6.9
-mypy==1.11.2
+# Runtime: the scanner core requires NOTHING beyond the Python standard library.
+# That is deliberate — a teacher on a locked-down school laptop should be able to
+# run this without a working pip.
+#
+# Everything below is optional. Install what you need, or none of it.
+#
+#   pip install -e ".[dev]"     tests, lint, type checking
+#   pip install -e ".[xml]"     hardened XML parsing for Office documents
+#   pip install -e ".[yara]"    run your own YARA rules
+#   pip install -e ".[build]"   build a standalone executable
+#
+# The desktop window uses tkinter, which ships with CPython. On Debian/Ubuntu it
+# is packaged separately: sudo apt install python3-tk

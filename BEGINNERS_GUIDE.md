@@ -31,98 +31,96 @@ This guide is for people who are new to computers and want a safe way to check s
 
 If the terminal says "The system cannot find the path specified" or "No such file or directory", double-check the folder location and try again.
 
-## 4. Create a safe Python environment
+## 4. Install what you need — probably nothing
 
-Copy and paste these commands into the terminal, one line at a time. Press Enter after each line.
+The scanner needs **no extra software**. It uses only what comes with Python.
 
-```bash
-python -m venv .venv
+If you want the desktop window as well, you may need one extra package:
+
+- **Windows and macOS:** nothing to do. It is already included.
+- **Debian, Ubuntu, Mint:** `sudo apt install python3-tk`
+- **Fedora:** `sudo dnf install python3-tkinter`
+
+## 5. Try it on the practice files first
+
+The project ships with a folder of harmless practice files. They are completely
+safe — they are ordinary text and pictures built to *look* like risky files, so
+you can see what the scanner does before you use it on real work.
+
 ```
-
-- On **Windows** run:
-  ```cmd
-  .venv\Scripts\activate
-  ```
-- On **macOS/Linux** run:
-  ```bash
-  source .venv/bin/activate
-  ```
-
-When the environment is active you will see `(.venv)` at the beginning of the terminal line.
-
-## 5. Install the scanner
-
-```bash
-pip install -r requirements.txt
-```
-
-Wait until the installation finishes. If you see an error, ensure your internet connection is working and run the command again.
-
-## 6. Create the example files
-
-The repository avoids storing binary files, so you need to create the harmless samples locally. Run:
-
-```bash
 python examples/generate_benign_samples.py
-```
-
-This command creates three safe files inside `examples/benign_samples/`:
-
-- `sample_text.txt` – a normal text file.
-- `sample_image.png` – a tiny picture.
-- `sample_docx.docx` – a Word document with no macros.
-
-## 7. Run your first scan
-
-```bash
 python -m scanner scan examples/benign_samples
-python -m scanner.main scan examples/benign_samples
 ```
 
-- If everything is safe, the program finishes with exit code `0` and prints a summary.
-- If you ever see exit code `1`, `2`, or `3`, read the message shown on screen and follow the safety tips below.
+You should see a list where most files are marked **DO NOT OPEN** and a few are
+marked **LIKELY SAFE**. That is correct: most of the practice files are supposed
+to be caught.
 
-## 8. What to do if something is flagged
+## 6. Check some real submissions
 
-1. **Do not open the file.**
-2. Move it away from your main folders using:
-   ```bash
-   python -m scanner quarantine PATH_TO_FILE --dest quarantine
-   python -m scanner.main quarantine PATH_TO_FILE --dest quarantine
-   ```
-3. Share the JSON or HTML report with your school IT team.
+Put the files you want to check into one folder. Then:
 
-## 9. Keep things up to date
-
-- To update the scanner later, open the project folder, activate the virtual environment again, and run:
-  ```bash
-  git pull
-  pip install -r requirements.txt
-  ```
-- Run the generator script again if you need fresh example files.
-
-## 10. Extra help
-
-- Read [README.md](README.md) for advanced features.
-- Read [SAFETY.md](SAFETY.md) for more safety advice.
-- If you are stuck, ask a colleague or your IT support team for help. Share any error messages exactly as they appear.
-
-## Windows (PowerShell)
-
-```powershell
-py -3 -m venv .venv
-. .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -m scanner.gui
+```
+python -m scanner scan "C:\Users\you\Downloads\period-3" --report-html report.html
 ```
 
-## macOS
+On macOS or Linux:
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m scanner.gui
+```
+python -m scanner scan ~/Downloads/period-3 --report-html report.html
 ```
 
-Stay safe and never execute files that you do not fully trust.
+Open `report.html` by double-clicking it. It opens in your web browser. It is a
+single file — you can email it to your IT team.
+
+## 7. Reading the result
+
+| What you see | What it means | What to do |
+| --- | --- | --- |
+| ✓ **LIKELY SAFE TO REVIEW** | Nothing was found | Open it normally |
+| ! **REVIEW WITH CAUTION** | Something is worth a look | Read the reason before opening |
+| ✖ **DO NOT OPEN — CONTACT IT** | Something clearly risky was found | Do not open it. Send the report to IT |
+| ? **COULD NOT FULLY INSPECT** | The scanner could not see inside | Treat it as unchecked, **not** as safe |
+
+Under each file, the report explains in plain words what was found, why it
+matters, and what to do. You can forward those sentences to a colleague or a
+parent as they are.
+
+## 8. If you want to open a window instead of typing commands
+
+```
+python -m scanner gui
+```
+
+Choose a folder, press **Scan**, and click any row to see the details. The
+**Copy summary for IT** button puts a plain-text summary on your clipboard.
+
+## 9. Moving risky files out of the way
+
+If you want the flagged files moved somewhere they cannot be opened by accident:
+
+```
+python -m scanner scan ~/Downloads/period-3 --quarantine-dir ~/Documents/quarantine
+```
+
+**Nothing is ever deleted.** The files are moved, renamed so a double-click does
+nothing, and written down in a list. To get one back:
+
+```
+python -m scanner quarantine-list --dest ~/Documents/quarantine
+python -m scanner restore <the id shown> --dest ~/Documents/quarantine
+```
+
+## 10. Important things to remember
+
+- This is **not** antivirus. Keep using whatever your school already installs.
+- "Likely safe" means *nothing was found*, not *this is definitely fine*.
+- The scanner never opens or runs the files it checks, and nothing is ever sent
+  over the internet. Student work stays on your computer.
+- If a file is marked **DO NOT OPEN**, send the report to your IT team — not the
+  file itself.
+
+## Getting help
+
+If something does not work, open an issue on the project page and paste what you
+typed and what you saw. Do not attach the student file.

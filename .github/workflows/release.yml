@@ -1,61 +1,113 @@
-name: build-and-release
+name: release
+
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -e ".[dev]"
+      - run: ruff check scanner tests examples
+      - run: mypy scanner
+      - run: pytest -q
+      - run: python scripts/check_corpus.py
+
   build:
+    needs: verify
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            asset: teacher-safe-scan-linux-x86_64
+          - os: macos-latest
+            asset: teacher-safe-scan-macos-arm64
+          - os: windows-latest
+            asset: teacher-safe-scan-windows-x86_64.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install deps
-        run: |
-          python -m pip install -U pip
-          pip install -r requirements.txt
-          pip install -r requirements-optional.txt || true
-          pip install pyinstaller PySimpleGUI
-          pip install ruff mypy pytest
-      - name: Lint & Typecheck
-        run: |
-          ruff check .
-          mypy .
-      - name: Test
-        run: pytest -q
-      - name: Build PyInstaller
+        with: { python-version: "3.12" }
+      - run: pip install -e ".[dev,build]"
+
+      - name: Build
+        run: python scripts/build_binary.py
+
+      - name: Name the artifact and checksum it
         shell: bash
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            python -m PyInstaller --noconfirm --clean --name TeacherSafeScanner --onefile --windowed --add-data "scanner/reporting/html_theme.css;scanner/reporting" scanner/gui.py
-            7z a TeacherSafeScanner-windows.zip dist/TeacherSafeScanner.exe
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            python -m PyInstaller --noconfirm --clean --name TeacherSafeScanner --onefile --windowed --add-data "scanner/reporting/html_theme.css:scanner/reporting" scanner/gui.py
-            ditto -c -k --sequesterRsrc --keepParent dist/TeacherSafeScanner dist/TeacherSafeScanner-macos.zip || \
-            (cd dist && zip -r ../TeacherSafeScanner-macos.zip TeacherSafeScanner)
+          mkdir -p out
+          src=dist/teacher-safe-scan
+          [ -f "$src.exe" ] && src="$src.exe"
+          cp "$src" "out/${{ matrix.asset }}"
+          cd out
+          if command -v sha256sum >/dev/null; then
+            sha256sum "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
           else
-            python -m PyInstaller --noconfirm --clean --name TeacherSafeScanner --onefile --windowed --add-data "scanner/reporting/html_theme.css:scanner/reporting" scanner/gui.py
-            (cd dist && tar -czf ../TeacherSafeScanner-linux.tar.gz TeacherSafeScanner)
+            shasum -a 256 "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
           fi
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+          cat "${{ matrix.asset }}.sha256"
+
+      - name: Smoke-test the built binary
+        shell: bash
+        run: |
+          bin="out/${{ matrix.asset }}"
+          chmod +x "$bin" || true
+          "$bin" --version
+          "$bin" make-samples --out ./smoke-samples
+          set +e; "$bin" --color never scan ./smoke-samples; code=$?; set -e
+          test "$code" = "2" || { echo "expected exit 2 from the corpus, got $code"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: TeacherSafeScanner-${{ matrix.os }}
-          path: |
-            TeacherSafeScanner-*.zip
-            TeacherSafeScanner-*.tar.gz
-  release:
+          name: ${{ matrix.asset }}
+          path: out/*
+
+  publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-        with:
-          path: ./artifacts
-      - name: Create Release
+        with: { path: artifacts, merge-multiple: true }
+      - run: ls -la artifacts
+
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: artifacts/*
+          generate_release_notes: true
+          body: |
+            ## Verify your download
+
+            ```
+            sha256sum -c teacher-safe-scan-<platform>.sha256
+            ```
+
+            ## These binaries are NOT code-signed
+
+            They are built by GitHub Actions from the tagged commit, and the
+            build log is public. They are **not** signed with an Apple Developer
+            ID and **not** notarised, so:
+
+            - **macOS** will refuse to run the binary until you clear it:
+              `xattr -d com.apple.quarantine ./teacher-safe-scan-macos-arm64`
+            - **Windows** SmartScreen will warn on first run.
+
+            If that is not acceptable in your environment, install from source
+            instead — the scanner core needs nothing but the Python standard
+            library:
+
+            ```
+            pip install teacher-safe-local-file-scanner
+            ```
