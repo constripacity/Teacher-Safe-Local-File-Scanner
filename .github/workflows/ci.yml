@@ -47,15 +47,17 @@ jobs:
       - name: Verify the scanner runs with zero dependencies
         shell: bash
         run: |
-          python -m venv /tmp/bare
-          if [ -f /tmp/bare/bin/python ]; then PY=/tmp/bare/bin/python; else PY=/tmp/bare/Scripts/python; fi
-          $PY examples/generate_benign_samples.py --out /tmp/samples
+          # Relative (workspace) paths so bash and Python resolve them identically
+          # on every runner — a hardcoded /tmp does not exist on windows-latest.
+          python -m venv .ci-bare
+          if [ -f .ci-bare/bin/python ]; then PY=.ci-bare/bin/python; else PY=.ci-bare/Scripts/python; fi
+          "$PY" examples/generate_benign_samples.py --out .ci-samples
           set +e
-          $PY -m scanner --color never scan /tmp/samples --report-json /tmp/r.json
+          "$PY" -m scanner --color never scan .ci-samples --report-json ci-report.json
           code=$?
           set -e
           test "$code" = "2" || { echo "expected exit code 2, got $code"; exit 1; }
-          $PY -c "import json;d=json.load(open('/tmp/r.json'));assert d['counts']['do_not_open']>10, d['counts']"
+          "$PY" -c "import json;d=json.load(open('ci-report.json'));assert d['counts']['do_not_open']>10, d['counts']"
 
   detection-corpus:
     name: detection corpus must not regress
