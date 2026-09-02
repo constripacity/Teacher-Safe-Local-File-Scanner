@@ -1,17 +1,919 @@
 {
-  "generated_at": "2024-01-01T00:00:00Z",
+  "generated_at": "2026-09-02T01:03:14+00:00",
+  "scanner_version": "0.3.0",
+  "roots": [
+    "examples/benign_samples"
+  ],
+  "headline": "15 of 29 files should not be opened. 4 more need a closer look.",
+  "total_files": 29,
+  "total_bytes": 681275,
+  "counts": {
+    "do_not_open": 15,
+    "review_with_caution": 4,
+    "could_not_inspect": 1,
+    "likely_safe": 9
+  },
+  "duplicate_groups": [
+    {
+      "sha256": "ff01d9ae5421e1d37d86c07efd550b9676c5301e77dc7136b8d1bb2b1170e810",
+      "count": 2,
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "paths": [
+        "examples/benign_samples/invoice\u202egpj.exe",
+        "examples/benign_samples/Assignment.pdf.exe"
+      ]
+    }
+  ],
+  "top_findings": [
+    {
+      "code": "content_is_executable",
+      "title": "File contains a program, whatever it is named",
+      "plain": "Regardless of its name, the contents of this file are a Windows program.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 2
+    },
+    {
+      "code": "pdf_open_action",
+      "title": "PDF runs something automatically when opened",
+      "plain": "This PDF is set up to do something on its own the moment it is opened, before you click anything.",
+      "severity": "medium",
+      "confidence": "medium",
+      "files": 2
+    },
+    {
+      "code": "image_not_an_image",
+      "title": "File is not the picture it claims to be",
+      "plain": "This file is named like an image (.jpg) but its contents are not image data \u2014 they look like a Windows program.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "name_bidi_override",
+      "title": "Filename uses a right-to-left override character",
+      "plain": "This file's name contains an invisible character that makes the name display backwards from a certain point, so what you see is not what the file is called.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "name_executable_extension",
+      "title": "File is a program or script",
+      "plain": "This is a .exe file \u2014 the computer treats it as something to run, not something to read.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "office_container_mismatch",
+      "title": "Not actually an Office document",
+      "plain": "This file is named like an Office document (.docx) but its contents are not in any Office format.",
+      "severity": "medium",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "pdf_launch_action",
+      "title": "PDF tries to launch another program",
+      "plain": "This PDF contains an instruction to start another program on your computer.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "pdf_javascript",
+      "title": "PDF contains JavaScript",
+      "plain": "This PDF contains JavaScript \u2014 program code that runs inside the PDF reader.",
+      "severity": "high",
+      "confidence": "medium",
+      "files": 1
+    },
+    {
+      "code": "name_double_extension",
+      "title": "File is disguised with a double extension",
+      "plain": "This file is named to look like a .pdf document but actually ends in .exe, which the computer runs as a program.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "archive_double_extension",
+      "title": "Entry is disguised with a double extension",
+      "plain": "The archive contains a file named like a document but ending in .exe, which the computer will run as a program.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "archive_path_traversal",
+      "title": "Archive entry escapes its own folder",
+      "plain": "One of the files inside this archive is set to unpack somewhere outside the folder you unzip it into.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    },
+    {
+      "code": "archive_executable_member",
+      "title": "Archive contains a runnable file",
+      "plain": "The archive contains installer.exe, which the computer treats as a program or script rather than a document.",
+      "severity": "high",
+      "confidence": "high",
+      "files": 1
+    }
+  ],
+  "detectors_used": [
+    "archive",
+    "core",
+    "general",
+    "image",
+    "office",
+    "pdf"
+  ],
+  "duration_ms": 24,
   "files": [
     {
-      "path": "submissions/homework1.zip",
-      "sha256": "abc123",
-      "size": 34567,
-      "magic_type": "zip",
-      "issues": [
-        {"code": "exe_in_zip", "description": "Found executable file payload.exe inside archive", "evidence": "payload.exe"},
-        {"code": "double_extension", "description": "Filename uses double extension 'report.pdf.exe'", "evidence": "report.pdf.exe"}
+      "path": "examples/benign_samples/image_is_really_a_program.jpg",
+      "name": "image_is_really_a_program.jpg",
+      "size": 583,
+      "sha256": "7ac5437894c477e49aa8018a981c3dcd27f3d12b4a238877ca829f8db83a5804",
+      "detected_type": "pe",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 90,
+      "rationale": [
+        "Rule 2: 2 high-severity finding(s) with usable confidence (content_is_executable, image_not_an_image)."
       ],
-      "score": 75,
-      "severity": "Suspicious"
+      "findings": [
+        {
+          "code": "content_is_executable",
+          "title": "File contains a program, whatever it is named",
+          "plain": "Regardless of its name, the contents of this file are a Windows program.",
+          "why": "The operating system decides what to do with a file partly by its contents. A program named .txt is still a program.",
+          "action": "Do not open or run this file. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "general",
+          "evidence": "detected as pe"
+        },
+        {
+          "code": "image_not_an_image",
+          "title": "File is not the picture it claims to be",
+          "plain": "This file is named like an image (.jpg) but its contents are not image data \u2014 they look like a Windows program.",
+          "why": "Renaming a program to end in .jpg is the oldest trick there is. Some programs open files by content rather than by name, so the real type is what matters.",
+          "action": "Do not open it. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "image",
+          "evidence": "magic bytes b'MZ\\x90\\x00echo' detected as pe"
+        }
+      ],
+      "duration_ms": 1
+    },
+    {
+      "path": "examples/benign_samples/invoice\u202egpj.exe",
+      "name": "invoice\u202egpj.exe",
+      "size": 69,
+      "sha256": "ff01d9ae5421e1d37d86c07efd550b9676c5301e77dc7136b8d1bb2b1170e810",
+      "detected_type": "pe",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 90,
+      "rationale": [
+        "Rule 2: 2 high-severity finding(s) with usable confidence (name_bidi_override, name_executable_extension)."
+      ],
+      "findings": [
+        {
+          "code": "name_bidi_override",
+          "title": "Filename uses a right-to-left override character",
+          "plain": "This file's name contains an invisible character that makes the name display backwards from a certain point, so what you see is not what the file is called.",
+          "why": "The only practical use of this character in a filename is to make a program look like a picture or a document.",
+          "action": "Do not open this file. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "general",
+          "evidence": "'invoice\\u202egpj.exe' contains RIGHT-TO-LEFT OVERRIDE"
+        },
+        {
+          "code": "name_executable_extension",
+          "title": "File is a program or script",
+          "plain": "This is a .exe file \u2014 the computer treats it as something to run, not something to read.",
+          "why": "A submission that is a program should be expected (a computing assignment) or refused. It should never be opened by double-clicking to 'see what it is'.",
+          "action": "If this is a programming assignment, open it in a text editor. Otherwise do not open it at all.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "general",
+          "evidence": "invoice\u202egpj.exe"
+        }
+      ],
+      "duration_ms": 0
+    },
+    {
+      "path": "examples/benign_samples/office_renamed_program.docx",
+      "name": "office_renamed_program.docx",
+      "size": 327,
+      "sha256": "0d5d0cf243a14f098b84e274561c56a1a5aec52431ac63451abb1d0a854bf9bc",
+      "detected_type": "pe",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 63,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (content_is_executable).",
+        "Note: inspection was also incomplete, so there may be more than is listed."
+      ],
+      "findings": [
+        {
+          "code": "content_is_executable",
+          "title": "File contains a program, whatever it is named",
+          "plain": "Regardless of its name, the contents of this file are a Windows program.",
+          "why": "The operating system decides what to do with a file partly by its contents. A program named .txt is still a program.",
+          "action": "Do not open or run this file. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "general",
+          "evidence": "detected as pe"
+        },
+        {
+          "code": "office_container_mismatch",
+          "title": "Not actually an Office document",
+          "plain": "This file is named like an Office document (.docx) but its contents are not in any Office format.",
+          "why": "A file whose real type does not match its name is either broken or deliberately disguised. Either way the Office checks could not run.",
+          "action": "Do not open it by double-clicking. Ask the student to re-send it.",
+          "severity": "medium",
+          "confidence": "high",
+          "detector": "office",
+          "evidence": "magic bytes b'MZ\\x90\\x00'",
+          "inspection_incomplete": true
+        }
+      ],
+      "duration_ms": 0
+    },
+    {
+      "path": "examples/benign_samples/pdf_launch_action.pdf",
+      "name": "pdf_launch_action.pdf",
+      "size": 269,
+      "sha256": "d1df9ad643014e7ebed211d644826b95f1014eb51277d948b181806cb1ed6989",
+      "detected_type": "pdf",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 59,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (pdf_launch_action)."
+      ],
+      "findings": [
+        {
+          "code": "pdf_open_action",
+          "title": "PDF runs something automatically when opened",
+          "plain": "This PDF is set up to do something on its own the moment it is opened, before you click anything.",
+          "why": "Automatic actions are how a PDF starts working without the reader doing anything. Some are harmless (jump to a page, play a sound); the mechanism is also the standard delivery step for PDF exploits.",
+          "action": "Open it in a browser's built-in PDF viewer, which sandboxes it, or ask IT.",
+          "severity": "medium",
+          "confidence": "medium",
+          "detector": "pdf",
+          "evidence": "/OpenAction"
+        },
+        {
+          "code": "pdf_launch_action",
+          "title": "PDF tries to launch another program",
+          "plain": "This PDF contains an instruction to start another program on your computer.",
+          "why": "There is no legitimate reason for a coursework PDF to launch an application. This is a direct execution attempt.",
+          "action": "Do not open this file. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "pdf",
+          "evidence": "/Launch"
+        }
+      ],
+      "duration_ms": 0
+    },
+    {
+      "path": "examples/benign_samples/pdf_javascript.pdf",
+      "name": "pdf_javascript.pdf",
+      "size": 281,
+      "sha256": "8483f47f32ae42eeb7fc4697254c456e4b4483fdbaa2f91364d81d23238fd2e0",
+      "detected_type": "pdf",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 50,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (pdf_javascript)."
+      ],
+      "findings": [
+        {
+          "code": "pdf_open_action",
+          "title": "PDF runs something automatically when opened",
+          "plain": "This PDF is set up to do something on its own the moment it is opened, before you click anything.",
+          "why": "Automatic actions are how a PDF starts working without the reader doing anything. Some are harmless (jump to a page, play a sound); the mechanism is also the standard delivery step for PDF exploits.",
+          "action": "Open it in a browser's built-in PDF viewer, which sandboxes it, or ask IT.",
+          "severity": "medium",
+          "confidence": "medium",
+          "detector": "pdf",
+          "evidence": "/OpenAction"
+        },
+        {
+          "code": "pdf_javascript",
+          "title": "PDF contains JavaScript",
+          "plain": "This PDF contains JavaScript \u2014 program code that runs inside the PDF reader.",
+          "why": "Very few documents need JavaScript; interactive forms are the main honest use. In student work it is unusual, and it is the component most PDF exploits rely on.",
+          "action": "Do not open it in Adobe Reader. A browser PDF viewer is much safer, or ask the student for a plain export.",
+          "severity": "high",
+          "confidence": "medium",
+          "detector": "pdf",
+          "evidence": "/JavaScript"
+        }
+      ],
+      "duration_ms": 1
+    },
+    {
+      "path": "examples/benign_samples/Assignment.pdf.exe",
+      "name": "Assignment.pdf.exe",
+      "size": 69,
+      "sha256": "ff01d9ae5421e1d37d86c07efd550b9676c5301e77dc7136b8d1bb2b1170e810",
+      "detected_type": "pe",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 45,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (name_double_extension)."
+      ],
+      "findings": [
+        {
+          "code": "name_double_extension",
+          "title": "File is disguised with a double extension",
+          "plain": "This file is named to look like a .pdf document but actually ends in .exe, which the computer runs as a program.",
+          "why": "Windows hides known file extensions by default, so 'essay.pdf.exe' appears in the folder as 'essay.pdf'. Double-clicking runs a program.",
+          "action": "Do not open this file. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "general",
+          "evidence": "Assignment.pdf.exe"
+        }
+      ],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/archive_double_extension.zip",
+      "name": "archive_double_extension.zip",
+      "size": 199,
+      "sha256": "0cb4f4ad43e892fceb8885c45ce09bba8e3b2d97536837506d8dd804e547cf71",
+      "detected_type": "zip",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 45,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (archive_double_extension)."
+      ],
+      "findings": [
+        {
+          "code": "archive_double_extension",
+          "title": "Entry is disguised with a double extension",
+          "plain": "The archive contains a file named like a document but ending in .exe, which the computer will run as a program.",
+          "why": "Windows hides known extensions by default, so 'essay.pdf.exe' shows up as 'essay.pdf'. Double-clicking it runs a program instead of opening a document.",
+          "action": "Do not open this archive. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "archive",
+          "evidence": "archive_double_extension.zip!Assignment.pdf.exe"
+        }
+      ],
+      "duration_ms": 5
+    },
+    {
+      "path": "examples/benign_samples/archive_path_traversal.zip",
+      "name": "archive_path_traversal.zip",
+      "size": 293,
+      "sha256": "20bab65dcb93a926f3c1bb0e79e83a8590ba7a017103aac0333baf039d6e9b65",
+      "detected_type": "zip",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 45,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (archive_path_traversal)."
+      ],
+      "findings": [
+        {
+          "code": "archive_path_traversal",
+          "title": "Archive entry escapes its own folder",
+          "plain": "One of the files inside this archive is set to unpack somewhere outside the folder you unzip it into.",
+          "why": "This is how an archive overwrites a file elsewhere on the computer \u2014 a startup script or a configuration file \u2014 the moment it is extracted. There is no legitimate reason for a student submission to do this.",
+          "action": "Do not extract this archive. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "archive",
+          "evidence": "archive_path_traversal.zip!../../autorun.txt"
+        }
+      ],
+      "duration_ms": 6
+    },
+    {
+      "path": "examples/benign_samples/archive_with_program.zip",
+      "name": "archive_with_program.zip",
+      "size": 290,
+      "sha256": "644b1ebbb6afb3c2b4df8a6ef0c61a94e3b5421400b02ef9a65d39aa7d053f47",
+      "detected_type": "zip",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 45,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (archive_executable_member)."
+      ],
+      "findings": [
+        {
+          "code": "archive_executable_member",
+          "title": "Archive contains a runnable file",
+          "plain": "The archive contains installer.exe, which the computer treats as a program or script rather than a document.",
+          "why": "Student coursework rarely needs to ship a runnable program. When it does \u2014 a computing class, a game project \u2014 this is expected; otherwise it is the most common way malware arrives in a submission.",
+          "action": "If this is not a programming assignment, do not open it. If it is, open it in a text editor rather than running it.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "archive",
+          "evidence": "archive_with_program.zip!installer.exe"
+        }
+      ],
+      "duration_ms": 1
+    },
+    {
+      "path": "examples/benign_samples/image_polyglot.png",
+      "name": "image_polyglot.png",
+      "size": 248,
+      "sha256": "a1431dba3092e35473327c9208e8fea38ea6955ac1ec00429795636813ccef7c",
+      "detected_type": "png",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 45,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (image_polyglot)."
+      ],
+      "findings": [
+        {
+          "code": "image_polyglot",
+          "title": "Another file is hidden inside this image",
+          "plain": "After the picture data ends, this file contains a ZIP archive.",
+          "why": "One file that is both a picture and an archive opens as a picture for you and as an archive for whatever the attacker points at it. Nothing legitimate produces this.",
+          "action": "Do not open this file. Send it to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "image",
+          "evidence": "179 trailing bytes beginning b'PK\\x03\\x04\\x14\\x00\\x00\\x00\\x08\\x00$\\x06\"]\\xf8Y'"
+        }
+      ],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/office_remote_template.docx",
+      "name": "office_remote_template.docx",
+      "size": 1625,
+      "sha256": "8691c03ef016ffefb1734532b6c91c568a20a2d7ba64ef3d68852dd57f01b37e",
+      "detected_type": "zip",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 45,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (office_external_attachedtemplate)."
+      ],
+      "findings": [
+        {
+          "code": "office_external_attachedtemplate",
+          "title": "Document links out to a remote template",
+          "plain": "The document is configured to load a template from another location when it opens.",
+          "why": "Remote template loading is one of the few ways a document that contains no macros of its own can still fetch and run one. It is a well-known phishing technique and almost never appears in student work.",
+          "action": "Do not open this document normally. Show the link target to IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "office",
+          "evidence": "word/_rels/settings.xml.rels: http://template.example.invalid/x.dotm"
+        }
+      ],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/office_with_macro.docm",
+      "name": "office_with_macro.docm",
+      "size": 1811,
+      "sha256": "4fc979076ba9968087e6abbd85f6f6e83c295f17aac8fe14571588fe2356bfb0",
+      "detected_type": "zip",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 45,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (office_macro_present)."
+      ],
+      "findings": [
+        {
+          "code": "office_macro_present",
+          "title": "Document contains a macro project",
+          "plain": "This document has macros \u2014 small programs stored inside the document that can run when it is opened.",
+          "why": "Macros are the single most common way a document infects a computer. Some legitimate coursework uses them (spreadsheet classes, accessibility templates), but a macro in an essay is not normal.",
+          "action": "Do not open this in Word or Excel. If you must read the text, open it in a viewer that does not run macros, or ask IT.",
+          "severity": "high",
+          "confidence": "high",
+          "detector": "office",
+          "evidence": "word/vbaProject.bin"
+        }
+      ],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/archive_zip_bomb_shape.zip",
+      "name": "archive_zip_bomb_shape.zip",
+      "size": 49044,
+      "sha256": "67a303480cedcfd5d08868cd559d5e275ba45612fd8cb39f65f829978bdcac28",
+      "detected_type": "zip",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 36,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (archive_bomb_ratio)."
+      ],
+      "findings": [
+        {
+          "code": "archive_bomb_ratio",
+          "title": "Entry expands to a wildly larger size",
+          "plain": "One entry is 47.8 KB on disk but claims to unpack to 48.0 MB (1,029 times larger).",
+          "why": "This is the signature of a decompression bomb: a tiny file that fills the disk or exhausts memory when opened.",
+          "action": "Do not extract this archive.",
+          "severity": "high",
+          "confidence": "medium",
+          "detector": "archive",
+          "evidence": "archive_zip_bomb_shape.zip!expands.bin 48924->50331648",
+          "extra": {
+            "ratio": 1028.8
+          }
+        }
+      ],
+      "duration_ms": 8
+    },
+    {
+      "path": "examples/benign_samples/image_large_appended.jpg",
+      "name": "image_large_appended.jpg",
+      "size": 614491,
+      "sha256": "0cd1ea1f0bbf7bdb294c94d62f9ddb300c3821c056a44b0d7c2b8b30dd35ba83",
+      "detected_type": "jpeg",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 36,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (image_large_appended_data)."
+      ],
+      "findings": [
+        {
+          "code": "image_large_appended_data",
+          "title": "A large amount of data is stored after the picture",
+          "plain": "The end of the picture data is more than 256 KB from the end of the file, so this file carries a substantial amount of something else.",
+          "why": "Image viewers stop at the end of the picture. Hundreds of kilobytes of invisible trailing content is not something a camera or an editor produces.",
+          "action": "Do not open this file. Send it to IT.",
+          "severity": "high",
+          "confidence": "medium",
+          "detector": "image",
+          "evidence": "no jpeg terminator within the last 262144 bytes"
+        }
+      ],
+      "duration_ms": 3
+    },
+    {
+      "path": "examples/benign_samples/office_dde_field.docx",
+      "name": "office_dde_field.docx",
+      "size": 1215,
+      "sha256": "4371bc30ee31cae2e72ec5f2412191079499ac5def37f238d16be4a0720e7dca",
+      "detected_type": "zip",
+      "verdict": "DO NOT OPEN \u2014 CONTACT IT",
+      "verdict_slug": "do_not_open",
+      "risk_score": 36,
+      "rationale": [
+        "Rule 2: 1 high-severity finding(s) with usable confidence (office_dde_field)."
+      ],
+      "findings": [
+        {
+          "code": "office_dde_field",
+          "title": "Document contains a DDE field",
+          "plain": "This document contains an instruction that asks another program to run when the document opens.",
+          "why": "DDE fields were widely used to launch commands from Word documents without any macro at all. Modern Office blocks them by default, but not every version does.",
+          "action": "Do not open this document. Send it to IT.",
+          "severity": "high",
+          "confidence": "medium",
+          "detector": "office",
+          "evidence": "word/document.xml: DDE field code present"
+        }
+      ],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/links_suspicious.txt",
+      "name": "links_suspicious.txt",
+      "size": 113,
+      "sha256": "6bf24df96bf50d10bd657e594e08bdc87b3f6be39b431c827337040c3eb8550b",
+      "detected_type": "unknown",
+      "verdict": "REVIEW WITH CAUTION",
+      "verdict_slug": "review_with_caution",
+      "risk_score": 22,
+      "rationale": [
+        "Rule 3: one medium-severity finding (url_punycode_host)."
+      ],
+      "findings": [
+        {
+          "code": "url_punycode_host",
+          "title": "Link uses a lookalike internationalised domain",
+          "plain": "A link in this file points at a domain written with characters that can imitate ordinary letters.",
+          "why": "Punycode domains are how '\u0430pple.com' (with a Cyrillic \u0430) is made to look like 'apple.com'. It is a phishing technique.",
+          "action": "Do not click the link. Type the address you meant to visit instead.",
+          "severity": "medium",
+          "confidence": "medium",
+          "detector": "general",
+          "evidence": "https://xn--80ak6aa92e.example/login"
+        },
+        {
+          "code": "url_raw_ip",
+          "title": "Link points at a bare IP address",
+          "plain": "A link in this file goes to a numeric address rather than a website name.",
+          "why": "Legitimate sites almost always use names. A bare IP avoids domain reputation checks and is common in malicious links \u2014 though it is also how someone links to a machine on the school network.",
+          "action": "Check with IT before following it.",
+          "severity": "low",
+          "confidence": "medium",
+          "detector": "general",
+          "evidence": "http://203.0.113.42/download"
+        },
+        {
+          "code": "url_shortener",
+          "title": "Link is shortened and hides its destination",
+          "plain": "This file contains 1 shortened link(s) whose real destination is not visible.",
+          "why": "A shortened link could go anywhere. Students use them constantly, so this is context rather than an accusation.",
+          "action": "Preview the link before clicking it.",
+          "severity": "low",
+          "confidence": "high",
+          "detector": "general",
+          "evidence": "https://bit.ly/3xAmPle"
+        }
+      ],
+      "duration_ms": 6
+    },
+    {
+      "path": "examples/benign_samples/archive_password_protected.zip",
+      "name": "archive_password_protected.zip",
+      "size": 197,
+      "sha256": "f6d5f310148ce6c4b49212889487779777835098b705c1d1d024608d56ee84a1",
+      "detected_type": "zip",
+      "verdict": "REVIEW WITH CAUTION",
+      "verdict_slug": "review_with_caution",
+      "risk_score": 18,
+      "rationale": [
+        "Rule 3: one medium-severity finding (archive_encrypted).",
+        "Inspection was incomplete; treat the result as a lower bound."
+      ],
+      "findings": [
+        {
+          "code": "archive_encrypted",
+          "title": "Archive is password protected",
+          "plain": "This archive is locked with a password, so the scanner could not look inside it.",
+          "why": "Password-protected archives are a standard way to smuggle files past scanners, because nothing \u2014 including antivirus \u2014 can read the contents. It is also, often, a student who read a tutorial. Either way it has not been checked.",
+          "action": "Do not open it. Ask the student to re-send the work without a password.",
+          "severity": "medium",
+          "confidence": "high",
+          "detector": "archive",
+          "evidence": "archive_password_protected.zip!secret_notes.txt",
+          "inspection_incomplete": true
+        }
+      ],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/office_embedded_object.docx",
+      "name": "office_embedded_object.docx",
+      "size": 1449,
+      "sha256": "d07d5506dcc24d6fa2cc17fdbde328f37ebb30256467032ab4c2434eeb092a79",
+      "detected_type": "zip",
+      "verdict": "REVIEW WITH CAUTION",
+      "verdict_slug": "review_with_caution",
+      "risk_score": 14,
+      "rationale": [
+        "Rule 3: one medium-severity finding (office_embedded_object)."
+      ],
+      "findings": [
+        {
+          "code": "office_embedded_object",
+          "title": "Document has other files embedded inside it",
+          "plain": "There are 1 file(s) packaged inside this document.",
+          "why": "Embedding is how a document carries a payload without looking like it does \u2014 but it is also how someone attaches a spreadsheet to a report. The embedded files were listed, not opened.",
+          "action": "Do not double-click the embedded object. Preview the document in a read-only viewer instead.",
+          "severity": "medium",
+          "confidence": "medium",
+          "detector": "office",
+          "evidence": "oleObject1.bin"
+        }
+      ],
+      "duration_ms": 6
+    },
+    {
+      "path": "examples/benign_samples/pdf_appended_payload.pdf",
+      "name": "pdf_appended_payload.pdf",
+      "size": 4326,
+      "sha256": "d9f9d6e5da105b05b14e3ed5983c7b9111568e9a659f41d26fc7c541cfc6a890",
+      "detected_type": "pdf",
+      "verdict": "REVIEW WITH CAUTION",
+      "verdict_slug": "review_with_caution",
+      "risk_score": 14,
+      "rationale": [
+        "Rule 3: one medium-severity finding (pdf_appended_data)."
+      ],
+      "findings": [
+        {
+          "code": "pdf_appended_data",
+          "title": "Extra data is hidden after the end of the PDF",
+          "plain": "There are 4,100 bytes of content after the point where this PDF officially ends.",
+          "why": "A PDF reader stops at the end marker, so anything after it is invisible when you open the file \u2014 which is exactly why payloads get stored there.",
+          "action": "Do not open this file. Send it to IT.",
+          "severity": "medium",
+          "confidence": "medium",
+          "detector": "pdf",
+          "evidence": "4100 bytes after final %%EOF, starts b'PK\\x03\\x04AAAAAAAAAAAA'"
+        }
+      ],
+      "duration_ms": 1
+    },
+    {
+      "path": "examples/benign_samples/broken_upload.zip",
+      "name": "broken_upload.zip",
+      "size": 196,
+      "sha256": "b808283c195e3c035d5be0f99e5e61cea6ec265678669eb64b1568fa9be49708",
+      "detected_type": "zip",
+      "verdict": "COULD NOT FULLY INSPECT",
+      "verdict_slug": "could_not_inspect",
+      "risk_score": 4,
+      "rationale": [
+        "Rule 1: the file could not be fully inspected (archive_corrupt). Absence of findings here is not evidence of safety."
+      ],
+      "findings": [
+        {
+          "code": "archive_corrupt",
+          "title": "Archive could not be opened",
+          "plain": "This ZIP file is damaged or is not really a ZIP file, so its contents could not be listed.",
+          "why": "A file that will not open cannot be checked. It may simply be a broken upload, but a damaged container is also a way to hide contents from scanners.",
+          "action": "Ask the student to re-send the file. Do not try to repair it yourself.",
+          "severity": "low",
+          "confidence": "high",
+          "detector": "archive",
+          "evidence": "File is not a zip file",
+          "inspection_incomplete": true
+        }
+      ],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/archive_nested_deep.zip",
+      "name": "archive_nested_deep.zip",
+      "size": 254,
+      "sha256": "88b0244caedd31a33ce49f78d40ba6635cfb7b57aa6080135ff9f62be9901ece",
+      "detected_type": "zip",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 4,
+      "rationale": [
+        "Rule 4: only 1 weak signal(s) found; not enough to warrant caution."
+      ],
+      "findings": [
+        {
+          "code": "archive_nested",
+          "title": "Archive contains other archives",
+          "plain": "This archive contains 1 further archive(s) inside it.",
+          "why": "Nesting archives is a routine way to make automated scanners give up before they reach the payload. It is also just how some people package folders.",
+          "action": "The scanner looked inside up to 3 levels. Anything deeper was not checked.",
+          "severity": "low",
+          "confidence": "high",
+          "detector": "archive",
+          "evidence": "level1.zip"
+        }
+      ],
+      "duration_ms": 5
+    },
+    {
+      "path": "examples/benign_samples/README.md",
+      "name": "README.md",
+      "size": 2038,
+      "sha256": "9eba71480394920b3aa969cb2aead92ce60a93b4423a0747f569c089e4e431ee",
+      "detected_type": "unknown",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [],
+      "duration_ms": 0
+    },
+    {
+      "path": "examples/benign_samples/clean_diagram.png",
+      "name": "clean_diagram.png",
+      "size": 69,
+      "sha256": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
+      "detected_type": "png",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/clean_essay.txt",
+      "name": "clean_essay.txt",
+      "size": 78,
+      "sha256": "0caff10572016627d25ca9789f1e7179301bd07360057e96297be367c1d4374d",
+      "detected_type": "unknown",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [],
+      "duration_ms": 8
+    },
+    {
+      "path": "examples/benign_samples/clean_homework.zip",
+      "name": "clean_homework.zip",
+      "size": 239,
+      "sha256": "47c2596f6a3a3ab31d628b544fc66ee2faa3e6878423866d5b083545c52adcdf",
+      "detected_type": "zip",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [],
+      "duration_ms": 1
+    },
+    {
+      "path": "examples/benign_samples/clean_photo.jpg",
+      "name": "clean_photo.jpg",
+      "size": 91,
+      "sha256": "41d7205ae212767e01bfd6e64445fa465748c586de4b8f498cc9e303baa62eac",
+      "detected_type": "jpeg",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [],
+      "duration_ms": 0
+    },
+    {
+      "path": "examples/benign_samples/clean_report.docx",
+      "name": "clean_report.docx",
+      "size": 1185,
+      "sha256": "9a780da6b90c9df96463ef6b7187609058cbab32c4348af0ebb2ca82b9fd0b79",
+      "detected_type": "zip",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [],
+      "duration_ms": 2
+    },
+    {
+      "path": "examples/benign_samples/clean_worksheet.pdf",
+      "name": "clean_worksheet.pdf",
+      "size": 226,
+      "sha256": "684b88771ecce07cc58ec46ce910ca82872b515e7013fd718f58d6e2bc88b3f5",
+      "detected_type": "pdf",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [],
+      "duration_ms": 1
+    },
+    {
+      "path": "examples/benign_samples/empty_submission.docx",
+      "name": "empty_submission.docx",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "detected_type": "empty",
+      "verdict": "LIKELY SAFE TO REVIEW",
+      "verdict_slug": "likely_safe",
+      "risk_score": 0,
+      "rationale": [
+        "No risk indicators matched in the checks this scanner performs."
+      ],
+      "findings": [
+        {
+          "code": "file_empty",
+          "title": "File is empty",
+          "plain": "This file contains no data at all.",
+          "why": "An empty submission is a failed upload, not a threat.",
+          "action": "Ask the student to submit it again.",
+          "severity": "info",
+          "confidence": "high",
+          "detector": "core"
+        }
+      ],
+      "duration_ms": 1
     }
   ]
 }

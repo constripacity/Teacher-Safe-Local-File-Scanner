@@ -1,0 +1,5 @@
+pytest>=8.0
+ruff>=0.6
+mypy>=1.10
+defusedxml>=0.7
+pyinstaller>=6.5

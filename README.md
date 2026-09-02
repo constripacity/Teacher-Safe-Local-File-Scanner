@@ -1,277 +1,283 @@
-# Teacher-Safe Local File Scanner
+<h1 align="center">Teacher-Safe Local File Scanner</h1>
 
-> **Defensive notice:** This project is provided for educational and defensive use by teachers and school IT staff. It is **not** a replacement for enterprise antivirus or endpoint protection.
+<p align="center">
+  <strong>Point it at a folder of student submissions. It tells you which ones not to open, and why — in plain English.</strong>
+</p>
 
-![Demo GIF placeholder](https://img.shields.io/badge/Demo%20GIF-coming%20soon-blue)
+<p align="center">
+  Runs entirely on your machine · never opens or runs the files it checks · no account, no upload, no API key
+</p>
 
-> To add your own walkthrough, drop a GIF at `docs/demo.gif` and update this link.
+<p align="center">
+  <a href="#30-second-start">Quickstart</a> ·
+  <a href="#what-it-actually-checks">What it checks</a> ·
+  <a href="#how-a-verdict-is-decided">How verdicts work</a> ·
+  <a href="#what-this-is-not">Limits</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-Teacher-Safe Local File Scanner is a Python-based, offline-friendly toolkit that helps educators quickly triage student-submitted files before opening them. It performs static checks only—no execution of untrusted code—and produces human-readable and machine-readable reports.
+---
 
-## Table of contents
+```
+  15 of 29 files should not be opened. 4 more need a closer look.
 
-1. [Features](#features)
-2. [Quickstart](#quickstart)
-3. [How scanning works](#how-scanning-works)
-4. [Command reference](#command-reference)
-5. [Optional defensive plugins](#optional-defensive-plugins)
-6. [Workflow guidance for flagged files](#workflow-guidance-for-flagged-files)
-7. [Safety, ethics, and limitations](#safety-ethics-and-limitations)
-8. [Cross-platform notes](#cross-platform-notes)
-9. [Reports and outputs](#reports-and-outputs)
-10. [Troubleshooting & FAQ](#troubleshooting--faq)
-11. [Development](#development)
-12. [Contributing](#contributing)
-13. [License](#license)
+   ✖ 15 DO NOT OPEN    ! 4 CAUTION    ? 1 NOT CHECKED    ✓ 9 LIKELY SAFE
 
-If you are new to command-line tools, start with the [Beginner Guide](BEGINNERS_GUIDE.md) for a slower, step-by-step walkthrough.
-
-## Features
-
-- Static detectors for risky constructs in ZIP, Office, PDF, and image files
-- Heuristic scoring with clear severity labels
-- Console, JSON, and HTML reporting
-- Optional directory watch mode using polling
-- Quarantine helper that moves, never deletes, suspicious files
-- Cross-platform (Windows, macOS, Linux) with standard library defaults
-- Optional integrations with `python-magic` and `yara-python`
-
-## Quickstart
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\\Scripts\\activate
-pip install -r requirements.txt
-python examples/generate_benign_samples.py  # Materialise demo files
+  FILE                            VERDICT        WHY
+  ------------------------------------------------------------------------------
+  image_is_really_a_program.jpg   ✖ DO NOT OPEN  File contains a program, whatever it is named
+  invoice<U+202E>gpj.exe          ✖ DO NOT OPEN  Filename uses a right-to-left override character
+  office_remote_template.docx     ✖ DO NOT OPEN  Document links out to a remote template
+  office_with_macro.docm          ✖ DO NOT OPEN  Document contains a macro project
+  archive_path_traversal.zip      ✖ DO NOT OPEN  Archive entry escapes its own folder
+  pdf_launch_action.pdf           ✖ DO NOT OPEN  PDF tries to launch another program
+  links_suspicious.txt            ! CAUTION      Link uses a lookalike internationalised domain
+  broken_upload.zip               ? NOT CHECKED  Archive could not be opened
 ```
 
-### Scan files or folders
+> **To add a screenshot:** run `teacher-safe-scan scan examples/benign_samples --report-html demo.html`,
+> open `demo.html`, and drop the image at `docs/report.png`. The corpus is
+> committed, so anyone can reproduce exactly the output above.
+
+## Why this exists
+
+A teacher gets thirty files through the LMS. One of them is a `.docm` with a
+macro. Existing tools do not help with that specific problem:
+
+| Tool | What it gives you |
+| --- | --- |
+| **Antivirus** | A verdict on *known* malware. Silence on a novel macro document. |
+| **[Dangerzone](https://github.com/freedomofpress/dangerzone)** | A sanitised copy of one file. Tells you nothing about what was in it, and can't take a folder. |
+| **[oletools](https://github.com/decalage2/oletools)**, pdfid, YARA | Excellent analyst output. Assumes you already know what `VBA_PROJECT` means. |
+| **VirusTotal-backed CLIs** | Great results — after uploading student work to a third party. |
+| **This** | One page. One row per submission. Worst first. A sentence per finding you could forward to a parent. |
+
+The unit of work here is **the folder**, not the file. That is the whole product.
+
+## 30-second start
+
+No install, no dependencies — the scanner core is pure standard library.
 
 ```bash
-python -m scanner scan ./examples/benign_samples --max-file-size 5000000 --threads 4
-python -m scanner.main scan ./examples/benign_samples --max-file-size 5000000 --threads 4
+git clone https://github.com/constripacity/Teacher-Safe-Local-File-Scanner
+cd Teacher-Safe-Local-File-Scanner
+
+python examples/generate_benign_samples.py      # 28 harmless files that trip every detector
+python -m scanner scan examples/benign_samples  # see the output above
 ```
 
-- Exit code `0`: no suspicious findings
-- Exit code `1`: caution or suspicious findings
-- Exit code `2`: high severity findings
-- Exit code `3`: internal scanner error
-
-### Watch a directory (polling, non-blocking)
+Then point it at real work:
 
 ```bash
-python -m scanner scan --watch ./incoming
-python -m scanner.main scan --watch ./incoming
+python -m scanner scan ~/Downloads/period-3-submissions --report-html report.html --open-report
 ```
 
-### Produce reports
+Prefer a window? `python -m scanner gui` (needs `tkinter`; on Debian/Ubuntu:
+`sudo apt install python3-tk`).
+
+Install it properly if you want the `teacher-safe-scan` command on your PATH:
 
 ```bash
-python -m scanner scan submissions --report-json scan_report.json --report-html scan_report.html
-python -m scanner report scan_report.json --html --output scan_report.html
-python -m scanner.main scan submissions --output scan_report.json
-python -m scanner.main report scan_report.json --html --output scan_report.html
+pip install -e .
+teacher-safe-scan scan ~/Downloads/submissions
 ```
 
-### Quarantine a file
+## What it actually checks
+
+Every check is **static**. Files are read as bytes. No macro runs, no PDF is
+rendered, no archive is extracted, no image is decoded.
+
+<details open>
+<summary><strong>Archives</strong> (.zip, .jar, .apk)</summary>
+
+- entries that unpack **outside** the extraction folder (`../`, absolute paths, drive letters, UNC)
+- executables and scripts inside the archive
+- members disguised with a double extension (`essay.pdf.exe`)
+- right-to-left overrides, zero-width and NUL characters in member names
+- password-protected entries — reported as *not checked*, never as clean
+- decompression-bomb shape: per-entry ratio and total unpacked size
+- nested archives, opened to a bounded depth; anything deeper is reported as unchecked
+</details>
+
+<details>
+<summary><strong>Office documents</strong> (.docx/.xlsx/.pptx, .docm/.xlsm/.pptm, legacy .doc/.xls)</summary>
+
+- macro projects (`vbaProject.bin`), and whether they are signed
+- **remote template injection** — the `attachedTemplate` external relationship
+- DDE / DDEAUTO field codes
+- ActiveX controls and embedded OLE objects
+- legacy compound-file macro storage
+- a file whose container does not match its extension
+
+Relationship XML is parsed with `defusedxml` when installed, and by a byte scan
+when it is not — never by stdlib ElementTree, which is not safe on hostile input.
+</details>
+
+<details>
+<summary><strong>PDFs</strong></summary>
+
+- `/Launch` actions
+- JavaScript (`/JS`, `/JavaScript`) — counted once, not twice
+- `/OpenAction` and `/AA` automatic actions
+- embedded file attachments
+- encryption (reported as *not fully checked*)
+- content appended after the final `%%EOF`
+- a PDF header that is not at byte zero
+</details>
+
+<details>
+<summary><strong>Images</strong> (.png, .jpg, .gif)</summary>
+
+- a program renamed to `.jpg` (content is checked, not the name)
+- **polyglots** — a real ZIP, PE or PDF hidden after the image terminator
+- large appended payloads, found however far from the end they are
+- oversized metadata chunks
+- impossible internal chunk lengths
+</details>
+
+<details>
+<summary><strong>Every file</strong></summary>
+
+- extension vs. real content mismatch, by magic bytes
+- double extensions and executable extensions
+- right-to-left override and invisible characters in the filename
+- shortened, raw-IP and punycode links inside text files
+- SHA-256, and identical files submitted more than once
+</details>
+
+## How a verdict is decided
+
+Four verdicts, and **"could not check" is never rounded down to "safe"**:
+
+| | Meaning |
+| --- | --- |
+| ✓ **LIKELY SAFE TO REVIEW** | Nothing matched. Not a guarantee. |
+| ! **REVIEW WITH CAUTION** | Something is worth a human look before opening. |
+| ✖ **DO NOT OPEN — CONTACT IT** | A high-severity indicator matched with usable confidence. |
+| ? **COULD NOT FULLY INSPECT** | Encrypted, too large, corrupt, or beyond a limit. **Unchecked ≠ clean.** |
+
+The verdict comes from four stated rules, not from summing opaque numbers.
+Severity ("how bad if true") and confidence ("how sure are we") are tracked
+separately, so *"this definitely has a macro"* and *"this might have an appended
+payload"* are never treated alike. Full model, including the exact rules and the
+per-finding-code cap that stops one hostile archive inflating a score:
+**[docs/SCORING.md](docs/SCORING.md)**.
+
+Every finding carries five things, and the report shows all of them:
+
+```
+[HIGH · high confidence]  Archive entry escapes its own folder
+
+  One of the files inside this archive is set to unpack somewhere
+  outside the folder you unzip it into.
+
+  Why this matters   This is how an archive overwrites a file elsewhere on
+                     the computer the moment it is extracted. There is no
+                     legitimate reason for a student submission to do this.
+  What to do         Do not extract this archive. Send it to IT.
+  Evidence           ../../autorun.txt
+  Detected by        archive
+```
+
+## Reports
 
 ```bash
-python -m scanner quarantine ./submissions/suspicious.docx --dest ./quarantine
-python -m scanner.main quarantine ./submissions/suspicious.docx --dest ./quarantine
+teacher-safe-scan scan ./submissions \
+  --report-html report.html \      # self-contained: no scripts, no network requests
+  --report-json report.json        # for scripting, or re-render later with `report`
 ```
 
-The quarantine command moves the file safely, sets read-only permissions, and leaves a `.meta.json` file with provenance details.
+The HTML report groups files worst-first, opens the flagged ones by default,
+prints cleanly, and can be forwarded to IT as a single file. It contains **no
+JavaScript and makes no network requests** — a report about untrusted files
+should not itself phone anywhere.
 
-### Refreshing the benign examples
-
-If you delete the generated examples or clone the repository fresh, run:
+## Quarantine — and getting files back
 
 ```bash
-python examples/generate_benign_samples.py
+teacher-safe-scan scan ./submissions --quarantine-dir ./quarantine
+teacher-safe-scan quarantine-list --dest ./quarantine
+teacher-safe-scan restore 3f9a21c40b8e --dest ./quarantine
 ```
 
-The script recreates a harmless text file, a minimal PNG image, and a macro-free `.docx` document without storing binary fixtures in the repository.
-
-## One-click binaries
-
-Grab the latest release assets for Windows, macOS, or Linux to run the scanner without Python. Each bundle ships offline-first and collects no telemetry.
-
-### Windows context menu
-
-1. Copy `TeacherSafeScanner.exe` to `C:\Program Files\TeacherSafe\`.
-2. Double-click `scripts/windows_add_context_menu.reg` to register a **Scan with Teacher-Safe** right-click option.
-
-### GUI launcher
-
-- On Python: run `python -m scanner.gui` and use the picker to select files or folders, then press **Scan** and **Open Report**.
-- On packaged builds: launch `TeacherSafeScanner` from the extracted bundle and follow the same steps to save and open the HTML report.
-
-## How scanning works
-
-The scanner combines lightweight type identification, static detectors, and heuristic scoring:
-
-| Phase | What happens | Key modules |
-| --- | --- | --- |
-| Discovery | Files are walked recursively (respecting `--max-file-size`) and hashed using streaming reads. | [`scanner.utils`](scanner/utils.py) |
-| Type sniffing | If `python-magic` is enabled, MIME detection is delegated; otherwise magic bytes are inspected. | [`scanner.scanner_core`](scanner/scanner_core.py) |
-| Detection | Format-specific rules look for risky markers (e.g., macros, embedded executables, appended payloads). | [`scanner.detectors`](scanner/detectors/__init__.py) |
-| Detection | Format-specific rules look for risky markers (e.g., macros, embedded executables, appended payloads). | [`scanner.detectors`](scanner/detectors.py) |
-| Scoring | Each finding contributes a weighted score mapped to Safe/Caution/Suspicious/High labels. | [`scanner.heuristics`](scanner/heuristics.py) |
-| Reporting | Results are aggregated into JSON, console, or HTML outputs. | [`scanner.reporters`](scanner/reporters.py) |
-
-The entire pipeline avoids running untrusted content and is safe to execute on offline, air-gapped devices.
+- **Nothing is ever deleted.** Quarantine moves; restore moves back.
+- Stored copies get a `.quarantined` suffix and lose their execute bits, so a
+  double-click hands them to nothing.
+- Two students submitting `assignment.docx` produce two distinct entries. No
+  overwrite, no data loss.
+- Every move is written to an append-only JSONL manifest with the SHA-256 before
+  and after, so a restore is verified and provable.
 
 ## Command reference
 
-The CLI exposes three subcommands and several shared options:
-The CLI exposes three subcommands and several shared options.
+| Command | What it does |
+| --- | --- |
+| `scan <paths…>` | Scan files or folders and print the triage table |
+| `scan … --watch` | Re-scan only files that appear or change |
+| `scan … --quarantine-dir DIR` | Move blocked files aside (nothing deleted) |
+| `report <json> --html <out>` | Re-render a saved report |
+| `quarantine <file> --dest DIR` | Move one file into quarantine |
+| `quarantine-list --dest DIR` | List what is in quarantine |
+| `restore <id> --dest DIR` | Move a file back out, hash-verified |
+| `gui` | Open the desktop window |
+| `make-samples` | Write the benign test corpus |
 
-### `scan`
-
-Scan one file or a directory tree.
-
-```bash
-python -m scanner.main scan <path> [--output report.json] [--threads 8] [--max-file-size 200000000]
-```
-
-Useful flags:
-
-- `--watch <folder>`: poll for new files while continuing to monitor previously scanned ones.
-- `--report-json` / `--report-html`: save structured and teacher-friendly reports in one run.
-- `--pdf-rules`, `--office-rules`, `--zip-rules`, `--image-rules`: choose `off`, `normal`, or `strict` for per-format heuristics.
-- `--use-magic` / `--use-yara`: opt into external libraries when installed.
-- `--max-file-size`: skip overly large submissions to save time.
-- `--threads`: increase if you have many CPU cores and fast storage.
-
-The scan command exits with a severity-driven code so it integrates well with CI or folder monitors.
-
-### `quarantine`
-
-Move suspicious files to a safe holding area without deleting them.
+Exit codes: `0` nothing found · `1` needs attention · `2` do not open · `3`
+scanner error · `4` usage error. Useful in a script:
 
 ```bash
-python -m scanner.main quarantine ./submissions/suspicious.docx --dest ./quarantine
+teacher-safe-scan scan ./inbox || echo "something needs a look"
 ```
 
-The destination receives a read-only copy plus a `.meta.json` file recording the original location, hash, and timestamp.
+Optional extras, none required: `pip install -e ".[xml]"` (hardened XML),
+`".[yara]"` (`--yara-rules your.yar`).
 
-### `report`
+## What this is not
 
-Render previously generated JSON results into other formats.
+- **Not antivirus.** No signature database, no known-malware detection. Run it
+  *alongside* your school's endpoint protection, never instead of it.
+- **Not a guarantee.** "Likely safe" means nothing matched the checks in this
+  tool. A novel technique this tool does not model will come back clean.
+- **Not a sanitiser.** It does not produce a safe copy. For that, use
+  [Dangerzone](https://github.com/freedomofpress/dangerzone) — the two compose
+  well: triage here, sanitise there.
+- **Not for offensive use.** It detects; it never builds, packs, or executes.
 
-```bash
-python -m scanner.main report scan_report.json --html --output scan_report.html
-```
+## Privacy
 
-Omit `--html` to stream a human-readable console summary instead.
-
-## Optional defensive plugins
-
-Install optional packages only if your environment permits:
-
-```bash
-pip install -r requirements-optional.txt
-```
-
-- `python-magic`: richer MIME identification (`--use-magic`)
-- `yara-python`: experimental pattern matching (`--use-yara`)
-
-The CLI flags are opt-in, and the scanner gracefully degrades when the libraries are unavailable.
-
-## Workflow guidance for flagged files
-
-1. **Do not open the file.** Treat warnings as serious until reviewed by IT.
-1. Do not open the file. Treat warnings as serious until reviewed by IT.
-2. Move the file to the quarantine folder for record keeping.
-3. Escalate to your IT or security team with the JSON/HTML report.
-4. Review in an isolated virtual machine if your institution allows it.
-5. When in doubt, collect additional context (e.g., student name, assignment) in a secure ticketing system.
-
-## Safety, ethics, and limitations
-
-- Static analysis only; no attempt is made to remove malware.
-- Large or encrypted archives may hide malicious content the scanner cannot inspect.
-- The heuristics prioritise minimizing false negatives but may produce false positives—always confirm with professional tools.
-- The tool never executes or modifies untrusted binaries beyond safe hashing and metadata reads.
-
-Read more in [SAFETY.md](SAFETY.md).
-
-## Cross-platform notes
-
-- Paths are managed with `pathlib`. When running on Windows, prefer PowerShell or CMD with UTF-8 enabled (`chcp 65001`).
-- Quarantine sets read-only attributes; if you need to restore a quarantined file, manually adjust permissions via `attrib -r` on Windows or `chmod +w` on Unix.
-- Polling-based watch mode relies on filesystem timestamps; on slow or networked drives expect a 10-second delay before changes are detected.
-- For macOS Gatekeeper prompts, run `xattr -dr com.apple.quarantine <path>` only on files you trust and after verifying reports.
-
-## Reports and outputs
-
-Reports follow a stable JSON schema so they can be ingested by help-desk systems:
-
-```json
-{
-  "path": "submissions/homework1.zip",
-  "sha256": "abc123...",
-  "size": 34567,
-  "magic_type": "zip",
-  "issues": [
-    {"code": "exe_in_zip", "description": "Found executable file payload.exe inside archive", "evidence": "payload.exe"},
-    {"code": "double_extension", "description": "Filename uses double extension 'report.pdf.exe'", "evidence": "report.pdf.exe"}
-  ],
-  "score": 75,
-  "severity": "Suspicious"
-}
-```
-
-When exporting HTML the report includes:
-
-- A safety banner reminding readers not to open flagged files.
-- A severity-coloured table summarising each item.
-- Collapsible detail sections for detector evidence.
-- Footer tips on next steps for educators.
-
-Console output defaults to a clean table suitable for terminal screenshots. Use `--verbose` during scans for additional logging.
-
-## Troubleshooting & FAQ
-
-**The scanner skips files larger than expected.**
-
-- Confirm the `--max-file-size` flag; the default is 100 MB. Some learning management systems export multi-gigabyte ZIPs that may need a higher limit.
-
-**`python-magic` or `yara-python` import errors appear.**
-
-- Ensure you installed `requirements-optional.txt`. On Windows you may need the Visual C++ Build Tools; on macOS install Homebrew `libmagic` first.
-
-**Watching a network share misses changes.**
-
-- Keep the watch directory local when possible. The default 10-second polling interval may drift on congested networks—re-run the command if scans appear delayed.
-
-**How do I update the benign sample files?**
-
-- Run `python examples/generate_benign_samples.py --force` to regenerate all fixtures. The script never overwrites files unless the hash changes, so it is safe to run repeatedly.
-
-**Can I integrate results into another system?**
-
-- Yes. The JSON report is linearly structured. Use `jq`, Python, or your preferred language to parse the `issues` array per file. The exit code makes automation straightforward.
+Nothing leaves your machine. There is no telemetry, no update check, no network
+code of any kind in the scanner. Student work is student data, and it stays on
+the laptop it arrived on.
 
 ## Development
 
 ```bash
-pip install -r requirements.txt
-pytest
-ruff check .
+pip install -e ".[dev]"
+pytest -q                        # 114 tests
+ruff check scanner tests examples
+mypy scanner
+python scripts/check_corpus.py   # detection regression: every sample must land where it should
 ```
 
-Recommended editor settings:
+`scripts/check_corpus.py` is the test that matters most. It asserts both
+directions: every hostile-shaped sample is caught, **and** every clean sample
+stays clean. A triage tool that cries wolf gets uninstalled.
 
-- Enable `black`-style formatting at 88 columns.
-- Turn on type checking (MyPy or Pyright) for early detection of annotation issues.
-- Configure your IDE to respect `.editorconfig` if present.
+Building a standalone binary (unsigned — see the script's own warning):
+
+```bash
+pip install -e ".[build]"
+python scripts/build_binary.py
+```
 
 ## Contributing
 
-We welcome defensive-minded contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards and submission guidelines.
+New detectors are very welcome, especially with a benign sample in
+`examples/generate_benign_samples.py` and a row in `scripts/check_corpus.py`.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) and
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Please read
+[SAFETY.md](SAFETY.md) before opening a PR — this project stays defensive.
 
 ## License
 
-MIT License © Teacher Safe Maintainers
-``` 
+MIT — see [LICENSE](LICENSE).
